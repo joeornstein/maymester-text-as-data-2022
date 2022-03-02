@@ -1,0 +1,209 @@
+% Syllabus Template from Arman Shokrollahi
+% https://www.overleaf.com/latex/templates/syllabus-template-course-info/gbqbpcdgvxjs
+
+\documentclass[11pt, letterpaper]{article}
+%\usepackage{geometry}
+\usepackage[inner=2cm,outer=2cm,top=2.5cm,bottom=2.5cm]{geometry}
+\pagestyle{empty}
+\usepackage{graphicx}
+\usepackage{fancyhdr, lastpage, bbding, pmboxdraw}
+\usepackage[usenames,dvipsnames]{color}
+\definecolor{darkblue}{rgb}{0,0,.6}
+\definecolor{darkred}{rgb}{.7,0,0}
+\definecolor{darkgreen}{rgb}{0,.6,0}
+\definecolor{red}{rgb}{.98,0,0}
+\usepackage[colorlinks,pagebackref,pdfusetitle,urlcolor=darkblue,citecolor=darkblue,linkcolor=darkred,bookmarksnumbered,plainpages=false]{hyperref}
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\pagestyle{fancyplain}
+\fancyhf{}
+\lhead{ \fancyplain{}{Text As Data} }
+%\chead{ \fancyplain{}{} }
+\rhead{ \fancyplain{}{Maymester 2022} }%\today
+%\rfoot{\fancyplain{}{page \thepage\ of \pageref{LastPage}}}
+\fancyfoot[RO, LE] {page \thepage\ of \pageref{LastPage} }
+\thispagestyle{plain}
+
+%%%%%%%%%%%% LISTING %%%
+\usepackage{listings}
+\usepackage{caption}
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
+\usepackage{verbatim} % used to display code
+\usepackage{fancyvrb}
+\usepackage{acronym}
+\usepackage{amsthm}
+\VerbatimFootnotes % Required, otherwise verbatim does not work in footnotes!
+
+
+
+\definecolor{OliveGreen}{cmyk}{0.64,0,0.95,0.40}
+\definecolor{CadetBlue}{cmyk}{0.62,0.57,0.23,0}
+\definecolor{lightlightgray}{gray}{0.93}
+
+
+
+\lstset{
+%language=bash,                          % Code langugage
+basicstyle=\ttfamily,                   % Code font, Examples: \footnotesize, \ttfamily
+keywordstyle=\color{OliveGreen},        % Keywords font ('*' = uppercase)
+commentstyle=\color{gray},              % Comments font
+numbers=left,                           % Line nums position
+numberstyle=\tiny,                      % Line-numbers fonts
+stepnumber=1,                           % Step between two line-numbers
+numbersep=5pt,                          % How far are line-numbers from code
+backgroundcolor=\color{lightlightgray}, % Choose background color
+frame=none,                             % A frame around the code
+tabsize=2,                              % Default tab size
+captionpos=t,                           % Caption-position = bottom
+breaklines=true,                        % Automatic line breaking?
+breakatwhitespace=false,                % Automatic breaks only at whitespace?
+showspaces=false,                       % Dont make spaces visible
+showtabs=false,                         % Dont make tabls visible
+columns=flexible,                       % Column format
+morekeywords={__global__, __device__},  % CUDA specific keywords
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+\begin{center}
+{\Large \textsc{POLS 8500: Text As Data}}
+\end{center}
+\begin{center}
+{\large Maymester 2022}
+\end{center}
+
+\begin{center}
+\rule{6.5in}{0.4pt}
+\begin{minipage}[t]{.96\textwidth}
+\begin{tabular}{llcccll}
+\textbf{Professor:} & Joe Ornstein & & &  & \textbf{Time:} & W 4:00 -- 6:45pm \\
+\textbf{Email:} &  \href{mailto:jornstein@uga.edu}{jornstein@uga.edu} & & & & \textbf{Place:} & 101D Baldwin Hall\\
+\textbf{Website:} & \href{https://github.com/joeornstein/maymester-text-as-data-2022}{github/joeornstein/maymester-text-as-data-2022} & & & & &
+\end{tabular}
+\end{minipage}
+\rule{6.5in}{0.4pt}
+\end{center}
+\vspace{.15cm}
+\setlength{\unitlength}{1in}
+\renewcommand{\arraystretch}{2}
+
+
+\noindent So much information about our political world is stored not in tidy datasets, but in \textit{texts}. Party manifestos, social media posts, city council minutes, email correspondence, treaties, ordinances, judicial decisions, presidential debates, Congressional speeches....the practice of politics in its myriad forms ultimately comes to be recorded in words on a page. How do we take all this unstructured text, far too extensive for any one researcher to read, and convert it into useful information for scientific inquiry?
+
+In this class we will explore the cutting edge of ``text-as-data'', with a focus on how to retrieve, represent, and analyze political texts as part of a research project. We will aim to cover both the conceptual and the practical, spending class time writing code to replicate and extend significant results from the past decade of political science research. 
+
+%\begin{figure}[h]
+%	\centering
+%	\href{https://xkcd.com/1856/}{\includegraphics[width=0.8\textwidth]{img/existence_proof_2x.png}}
+%\end{figure}
+
+%\begin{quotation}
+%	\noindent``\textit{You can't really know anything if you just remember isolated facts. If the facts don't hang together on a latticework of theory, you don't have them in a usable form. You've got to have models in your head.}''\\
+%	\\
+%	--Charlie Munger (investor, vice chairman of Berkshire Hathaway)
+%\end{quotation}
+
+
+\section*{Course Prerequisites and Objectives}
+%\vskip.15in
+%\noindent\textbf{Course Objectives:}  
+I will assume that before taking this course you have taken the POLS 7012 and 7014 or their equivalents (introduction to statistics and linear regression) and that you are familiar with the \texttt{R} programming language. By the end of this course, you will be able to:
+\begin{itemize}
+	\item Retrieve and clean text data from a variety of sources
+	\item Thoughtfully measure and quantify concepts of interest to your research using text data
+	\item Fit machine learning models for clustering, sentiment analysis, topic classification, and prediction
+\end{itemize}
+
+
+\section*{Assignments \& Grading}
+
+There will be daily coding activities in class designed to apply the concepts we learn to practical research problems. Your grade will be based on the successful completion of these assignments. 
+
+%\vskip.15in
+%\noindent\textbf{Office Hours:} 
+\section*{Office Hours}
+
+Since we're meeting for 3 hours every day, I will not hold formal office hours, but I will generally be available before and after class to discuss questions and will respond to emails from 9am to 4pm.
+
+%\vskip.15in
+%\noindent\textbf{Textbook:} %\footnotemark
+\section*{Textbooks}
+
+For our tour through the world of text as data, we will rely on two textbooks. The first is a a broad conceptual overview of the field of text as data, and the second is a practical introduction to the \texttt{R} code you can use to work with text (and is available online for free at the link below).
+
+\begin{itemize}
+\item Grimmer, Justin, Brandon M. Stewart, and Margaret E. Roberts. \textit{Text As Data: A New Framework for Machine Learning and the Social Sciences.} Princeton University Press, 2022.
+\item \href{https://www.tidytextmining.com/index.html}{Silge, Julia, and David Robinson. \textit{Text Mining with R: A Tidy Approach.} First edition. O’Reilly, 2017.}
+\end{itemize} 
+
+
+
+\section*{Tentative Course Outline and Readings}
+
+\subsection*{Day 1: Getting Started}
+
+\textit{What Are We Doing Here? A review of R and RStudio.}
+
+\begin{itemize}
+	\item GSR Chapters 1-2
+\end{itemize}
+
+\subsection*{Day 2: Creating a Corpus}
+
+\textit{Where and how do we get text data? Playtime with Twitter.}
+
+\begin{itemize}
+	\item GSR Chapters 3-4
+\end{itemize}
+
+\subsection*{Day 3: The Bag of Words}
+
+\textit{What if we ignored everything we know about language and just counted the words? Would that get us anywhere?}
+
+\begin{itemize}
+	\item GSR Chapter 5
+	\item \href{https://www.tidytextmining.com/tfidf.html}{SR Chapter 3}
+\end{itemize}
+
+\subsection*{Day 4: XXX}
+
+
+\subsection*{Day XXX: The Federalist Papers}
+
+
+
+\subsection*{Day XXX: Clustering}
+
+
+
+\subsection*{Day XXX: Topic Models}
+
+\textit{Latent Dirichlet Allocation (LDA): Not Quite As Frightening As That Name Makes It Seem}
+
+\begin{itemize}
+	\item GSR Chapter 13
+	\item \href{https://www.tidytextmining.com/topicmodeling.html}{SR Chapter 6}
+\end{itemize}
+
+
+
+
+%\section*{Academic Honesty}
+%
+%Remember that when you joined the University of Georgia community, you agreed to abide by a code of conduct outlined in the academic honesty policy called \href{https://honesty.uga.edu/Academic-Honesty-Policy/Introduction/}{\textit{A Culture of Honesty}}. 
+
+\section*{Mental Health and Wellness Resources}
+
+\begin{itemize}
+\item If you or someone you know needs assistance, you are encouraged to contact Student Care and Outreach in the Division of Student Affairs at 706-542-7774 or visit \href{https://sco.uga.edu}{https://sco.uga.edu}. They will help you navigate any difficult circumstances you may be facing by connecting you with the appropriate resources or services. 
+\item UGA has several resources for a student seeking \href{https://www.uhs.uga.edu/bewelluga/bewelluga}{mental health services} or \href{https://www.uhs.uga.edu/info/emergencies}{crisis support}. 
+\item If you need help managing stress anxiety, relationships, etc., please visit \href{https://www.uhs.uga.edu/bewelluga/bewelluga}{BeWellUGA} for a list of FREE workshops, classes, mentoring, and health coaching led by licensed clinicians and health educators in the University Health Center.
+\item Additional resources can be accessed through the UGA App.
+\end{itemize}
+
+
+
+%%%%%% THE END 
+\end{document} 
