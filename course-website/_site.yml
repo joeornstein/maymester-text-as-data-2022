@@ -21,7 +21,7 @@ navbar:
     - text: "Syllabus"
       href: syllabus/POLS-8500-syllabus.pdf
     - icon: fas fa-book-open
-      href: "https://app.perusall.com/courses/text-as-data-281296639/_/dashboard/startup"
+      href: "https://app.perusall.com/courses/text-as-data-281296639/"
     - icon: fab fa-github
       href: "https://github.com/joeornstein/maymester-text-as-data-2022"
 output:

@@ -6,6 +6,7 @@ author:
     affiliation: University of Georgia
     affiliation_url: https://spia.uga.edu/departments-centers/department-of-political-science/
     orcid_id: 0000-0002-5704-2098
+date: "`r Sys.Date()`"
 description: |
   A course on analyzing political texts using the `R` programming language
 site: distill::distill_website
@@ -20,16 +21,14 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ```
 
-**Last Update:** `r Sys.Date()`
-
 ## Overview
 
-This site is intended to serve as a companion to @grimmerTextDataNew2021, an excellent book on thinking about text as data, which makes a deliberate choice (wisely, in my view) to omit coding instructions on how to implement the methods they discuss. Books with code, particularly in fast-evolving subfields, can quickly become dated. Thus the need for this supplement, which was developed with my students during our Summer 2022 Text As Data course at the University of Georgia.
+This site is intended to serve as a companion to @grimmerTextDataNew2021, an excellent book on thinking about text as data, which makes a deliberate choice (wisely, in my view) to omit coding instructions on how to implement the methods they discuss. Books with code, particularly in fast-evolving subfields, can quickly become dated. Thus the need for this supplement, which I developed with my students during our Summer 2022 Text As Data course at the University of Georgia.
 
-This site is divided into three sections, which correspond to the three stages of any text-as-data workflow:
+This site is divided into three sections, corresponding to the three stages of any text-as-data workflow:
 
 1.  **Harvest The Text**: How to carefully choose what texts to include in your corpus, and how to get them from some messy format like HTML or PDF into a plaintext dataframe.
 2.  **Clean The Text:** How to represent large amounts of text quantitatively, and what choices you need to make during the preprocessing stage.
-3.  **Model The Text:** How to choose a model to fit your objective, be it prediction, classification, causal inference, or exploration.
+3.  **Model The Text:** How to build a model to meet your objective, be it prediction, classification, causal inference, or exploration.
 
 For each stage in the workflow, there are a number of useful `R` packages that can help accomplish these tasks, including webscraping (`rvest`), optical character recognition (`tesseract`), tidying (`tidytext`), topic modeling (`topicmodels`), sentiment analysis (`sentimentR`), and many others. On this site, we will walk through several tutorials of these packages -- motivated by political science applications -- with links to more detailed documentation for those interested in exploring further.
