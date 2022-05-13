@@ -1,0 +1,29 @@
+name: "course-website"
+title: "Text As Data"
+favicon: img/favicon_io/favicon.ico
+theme: theme.css
+description: |
+  Text As Data
+output_dir: "../../../projects/joeornstein.github.io/text-as-data/" # kludgily direct the output to your GitHub pages
+navbar:
+  left:
+    - text: "Harvesting Text"
+      menu:
+        - text: "Webscraping"
+          href: 01-webscraping.html
+        - text: "Optical Character Recognition"
+          href: 02-ocr.html
+        - text: "APIs"
+          href: 03-apis.html
+  right:
+    - text: "Home"
+      href: index.html
+    - text: "Syllabus"
+      href: syllabus/POLS-8500-syllabus.pdf
+    - icon: fas fa-book-open
+      href: "https://app.perusall.com/courses/text-as-data-281296639/_/dashboard/startup"
+    - icon: fab fa-github
+      href: "https://github.com/joeornstein/maymester-text-as-data-2022"
+output:
+  distill::distill_article:
+    toc: true

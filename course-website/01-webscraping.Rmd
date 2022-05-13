@@ -1,0 +1,62 @@
+---
+title: "Week 1"
+description: |
+  Getting all the software up and running
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+```
+
+This week, we will familiarize ourselves with a suite of software that will make life as a social scientist so much nicer -- tools for managing your data, your references, and your knowledge. Make sure you've completed everything from the [Getting Started](index.html#getting-started) section on the home page.
+
+## Introductions
+
+On our first day, we will be collecting and analyzing some data about the class itself. Please complete the following survey.[^survey]
+
+[^survey]: If the embedded survey isn't working for some reason, click [here](https://docs.google.com/forms/d/e/1FAIpQLScvfmmeiPeg4Qudq4E7P-Qiyb7h8mF0CrfusOns4hTGoTdOyQ/viewform?usp=sf_link).
+
+```{r survey}
+knitr::include_url('https://docs.google.com/forms/d/e/1FAIpQLScvfmmeiPeg4Qudq4E7P-Qiyb7h8mF0CrfusOns4hTGoTdOyQ/viewform?usp=sf_link')
+```
+
+The results will be available [here](https://docs.google.com/spreadsheets/d/1BTVFoZQjRNB63Pyg_z-hjGICpP_vlcokRy0-SSGX-10/).
+
+## Reading Assignments
+
+Before Week 2, please read and annotate the following:
+
+- [Healy Preface](https://socviz.co/index.html#preface) (and complete the package installation instructions at the bottom)
+- [Teacup Giraffes](https://tinystats.github.io/teacups-giraffes-and-statistics/index.html) (Intro to R module)
+- [Healy Chapter 2](https://socviz.co/gettingstarted.html)
+- [Healy Chapter 3](https://socviz.co/makeplot.html#makeplot)
+
+
+Optional:
+
+- [Healy Chapter 1](https://socviz.co/lookatdata.html): A nice review of the evidence on what makes an effective visualization.
+
+## Problem Set
+
+Our first problem set will ensure that all the software is functioning on your machine. If you can complete all of the following steps, then you're in good shape!
+
+1. Open `intro-to-political-methodology.Rproj` and pull the latest updates from the GitHub repository.
+
+2. Open `R/week-01/problem-set-01.Rmd`.
+
+3. Edit the metadata so that you are the author.
+
+4. Add an in-text citation to something from your Zotero library.
+
+5. Make sure you have the `tinytex` package installed. This is the library you need to convert RMarkdown documents into PDFs. To install, enter these two lines into your RStudio console.
+
+```{r install-tinytex, eval = FALSE, echo = TRUE}
+install.packages('tinytex')
+tinytex::install_tinytex()
+```
+
+6. Knit to PDF.
+
+7. Submit the knitted PDF document to [eLC](https://uga.view.usg.edu/d2l/le/content/2356038/Home) by our next class.[^1]
+
+[^1]: All problem sets due by the *following* week's class (so this one is due before our second class). Feel free to work together on problem sets, but I encourage you to type out the solutions yourself instead of copying-pasting from others. You can't learn this stuff without doing it. 
