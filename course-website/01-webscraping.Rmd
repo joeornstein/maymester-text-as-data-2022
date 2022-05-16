@@ -1,7 +1,7 @@
 ---
 title: "Webscraping Tutorial"
 description: |
-  What to do when you just want text but the website where it lives is trying to sell you prescription medications or something.
+  What to do when you just want text, but the website where the text lives is trying to sell you prescription medications or something.
 ---
 
 ```{r setup, include=FALSE}
@@ -31,7 +31,41 @@ To read the HTML from a web page, we can use the `read_html()` function, just li
 page <- read_html('https://www.foxnews.com/transcript/tucker-the-us-is-looking-at-a-grim-economic-picture')
 ```
 
-### Get the elements we want
+### Getting the Right Elements
 
-- Every HTML page is divided into sections by tags. If you can identify the tag you want, you're golden.
-- ScraperTool comes in handy!
+Every HTML page is divided into sections by *tags*. If you want to get deep into webscraping, it will be useful to be able to identify some of those tags, because that's how we're going to select which elements from a HTML page we want to keep. 
+
+For instance, there is an HTML tag called `<p>`, which denotes paragraphs of text. To get a list of all elements with the `<p>` tag on this webpage we loaded, we run the following line of code:
+
+```{r}
+paragraphs <- page |>
+  html_elements('p')
+
+paragraphs
+```
+
+This gives us a list with all the raw HTML code. Notice that the 4th entry looks like it has the transcript text we want. To get the plain text from that line of HTML code, we'll use the `html_text()` function.
+
+```{r}
+text <- html_text(paragraphs[[4]])
+
+text
+```
+
+### SelectorGadget
+
+If you, like me, do not have a deep knowledge of HTML tags and CSS selectors that you can deploy to find the right element on a page, then the [SelectorGadget](https://rvest.tidyverse.org/articles/selectorgadget.html) comes in handy! This is an in-browser tool that was developed alongside the `rvest` package, which allows you to visit the page you're scraping and determine what input to `html_elements()` will get you the section of the page you want. 
+
+```{r, echo = FALSE, fig.cap='Keep the text you want, leave out the Amazon ads and whatever Bette Midler tweeted about the baby formula shortage.'}
+knitr::include_graphics('img/SelectorGadget.png')
+```
+
+If we use the SelectorGadget on our webpage here, highlighting the elements we want in green and the elements we *don't* want in red, it tells us to use the selector `.speakable:nth-child(6)`. Here's what that complete pipeline looks like:
+
+```{r}
+text <- page |> 
+  html_elements('.speakable:nth-child(6)') |> 
+  html_text()
+  
+text
+```
