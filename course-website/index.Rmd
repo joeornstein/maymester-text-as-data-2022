@@ -27,8 +27,8 @@ This site is intended to serve as a companion to @grimmerTextDataNew2021, an exc
 
 This site is divided into three sections, corresponding to the three stages of any text-as-data workflow:
 
-1.  **Harvest The Text**: How to carefully choose what texts to include in your corpus, and how to get them from some messy format like HTML or PDF into a plaintext dataframe.
-2.  **Clean The Text:** How to represent large amounts of text quantitatively, and what choices you need to make during the preprocessing stage.
-3.  **Model The Text:** How to build a model to meet your objective, be it prediction, classification, causal inference, or exploration.
+1.  **Harvest the Text**: How to carefully choose what texts to include in your corpus, and how to get them from some messy format like HTML or PDF into a plaintext dataframe.
+2.  **Tidy the Text:** How to represent large amounts of text quantitatively, and what choices you need to make during the preprocessing stage.
+3.  **Model the Text:** How to build a model to meet your objective, be it prediction, classification, causal inference, or exploration.
 
 For each stage in the workflow, there are a number of useful `R` packages that can help accomplish these tasks, including webscraping (`rvest`), optical character recognition (`tesseract`), tidying (`tidytext`), topic modeling (`topicmodels`), sentiment analysis (`sentimentR`), and many others. On this site, we will walk through several tutorials of these packages -- motivated by political science applications -- with links to more detailed documentation for those interested in exploring further.

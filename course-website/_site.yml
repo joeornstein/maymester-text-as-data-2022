@@ -7,14 +7,22 @@ description: |
 output_dir: "../../../projects/joeornstein.github.io/text-as-data/" # kludgily direct the output to your GitHub pages
 navbar:
   left:
-    - text: "Harvesting Text"
+    - text: "Harvest the Text"
       menu:
         - text: "Webscraping"
           href: 01-webscraping.html
         - text: "Optical Character Recognition"
-          href: 02-ocr.html
+          href: 01-ocr.html
         - text: "APIs"
-          href: 03-apis.html
+          href: 01-apis.html
+    - text: "Tidy the Text"
+      menu:
+        - text: "Tokenization"
+          href: 02-tokenization.html
+    - text: "Model the Text"
+      menu:
+        - text: "Topic Models"
+          href: 03-topic-models.html
   right:
     - text: "Home"
       href: index.html
