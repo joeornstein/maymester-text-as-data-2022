@@ -10,19 +10,19 @@ navbar:
     - text: "Harvest the Text"
       menu:
         - text: "Webscraping"
-          href: 01-webscraping.html
+          href: webscraping.html
         - text: "Optical Character Recognition"
-          href: 01-ocr.html
+          href: under-construction.html
         - text: "APIs"
-          href: 01-apis.html
+          href: under-construction.html
     - text: "Tidy the Text"
       menu:
         - text: "Tokenization"
-          href: 02-tokenization.html
+          href: under-construction.html
     - text: "Model the Text"
       menu:
         - text: "Topic Models"
-          href: 03-topic-models.html
+          href: under-construction.html
   right:
     - text: "Home"
       href: index.html

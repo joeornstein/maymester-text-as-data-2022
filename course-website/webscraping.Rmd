@@ -69,3 +69,15 @@ text <- page |>
   
 text
 ```
+
+## Being Polite
+
+If you plan to use lots of webscraping for your research, it would be wise to brush up on etiquette. Some sites (like Facebook) explicitly ban scraping in their Terms of Service, and even sites that do permit scraping would prefer you didn't overload them with automated requests. You know how people talk about bots destroying the Internet? Well, you've just created a bot, and it's incumbent on you to use it wisely. The [`polite`](https://dmi3kno.github.io/polite/) package is a good place to get started.
+
+## Practice Problems
+
+1. Scrape the transcript from the [Rachel Maddow Show on May 11, 2022](https://www.msnbc.com/transcripts/rachel-maddow-show/transcript-rachel-maddow-show-5-11-22-n1295460).
+
+2. Scrape the text of [Federalist Papers No. 10](https://billofrightsinstitute.org/primary-sources/federalist-no-10).
+
+3. Scrape the text of the [US Congressional Record (Senate - May 16, 2022)](https://www.congress.gov/congressional-record/2022/05/16/senate-section/article/S2509-4).
