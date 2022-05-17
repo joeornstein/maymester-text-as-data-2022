@@ -81,3 +81,5 @@ If you plan to use lots of webscraping for your research, it would be wise to br
 2. Scrape the text of [Federalist Papers No. 10](https://billofrightsinstitute.org/primary-sources/federalist-no-10).
 
 3. Scrape the text of the [US Congressional Record (Senate - May 16, 2022)](https://www.congress.gov/congressional-record/2022/05/16/senate-section/article/S2509-4).
+
+4. Scrape the text of [The Patient Protection and Affordable Care Act (March 23, 2010)](https://www.congress.gov/bill/111th-congress/house-bill/3590/text).
