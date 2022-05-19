@@ -1,0 +1,19 @@
+---
+title: "Twitter API"
+description: |
+  How to get the tweets
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+
+
+## Practice Problems
+
+
+
+## Further Reading
+
+- [Michael Kearney's `rtweet` tutorial](https://mkearney.github.io/nicar_tworkshop/#1)
