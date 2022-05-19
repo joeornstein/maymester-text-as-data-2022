@@ -38,7 +38,10 @@ text <- tesseract::ocr(pngfile)
 
 text2 <- pdftools::pdf_ocr_data('data/img/Brochure_TAG_Project-Sheets_100-PRINCE.pdf')
 
-# Garbage. Let's see if we can just capture the text in the white box
+# Garbage. Try pdf_text()
+text3 <- pdf_text('data/img/Brochure_TAG_Project-Sheets_100-PRINCE.pdf')
+
+# Garbage again. Let's see if we can just capture the text in the white box
 library(magick)
 
 brochure <- image_read_pdf('data/img/Brochure_TAG_Project-Sheets_100-PRINCE.pdf', pages = 1, density = 600)
