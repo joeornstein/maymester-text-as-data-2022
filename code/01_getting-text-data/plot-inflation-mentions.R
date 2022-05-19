@@ -38,8 +38,14 @@ tidy_transcripts |>
 inflation_counts <- tidy_transcripts |>
   group_by(program, network, date) |>
   summarize(total_words = n(),
-            inflation_words = sum(str_detect(word, 'inflatio|^pric|^shortage'))) |>
-  mutate(pct_inflation = inflation_words / total_words * 100) |>
+            inflation_words = sum(str_detect(word, 'inflatio|^pric|^shortage')),
+            trump_mentions = sum(word == 'trump'),
+            ukraine_words = sum(str_detect(word, '^ukrai|^escal^|^nucl|^zelens|war|^russi')),
+            extremism_mentions = sum(str_detect(word, '^extremi'))) |>
+  mutate(pct_inflation = inflation_words / total_words * 100,
+         pct_trump = trump_mentions / total_words * 100,
+         pct_ukraine = ukraine_words / total_words * 100,
+         pct_extremism = extremism_mentions / total_words * 100) |>
   ungroup()
 
 
@@ -56,3 +62,69 @@ p <- inflation_counts |>
        fill = 'Network')
 
 p
+
+p2 <- inflation_counts |>
+  mutate(program_label = paste0(program, ' (', date, ')')) |>
+  ggplot(mapping = aes(x = pct_trump,
+                       y = reorder(program_label, pct_trump),
+                       fill = network)) +
+  geom_col() +
+  theme_minimal() +
+  labs(x = 'Trump Mentions (% of Words)',
+       y = 'Program',
+       fill = 'Network')
+
+p2
+
+p3 <- inflation_counts |>
+  mutate(program_label = paste0(program, ' (', date, ')')) |>
+  ggplot(mapping = aes(x = pct_ukraine,
+                       y = reorder(program_label, pct_ukraine),
+                       fill = network)) +
+  geom_col() +
+  theme_minimal() +
+  labs(x = 'Words About Ukraine War (% of total)',
+       y = 'Program',
+       fill = 'Network')
+
+p3
+
+p4 <- inflation_counts |>
+  mutate(program_label = paste0(program, ' (', date, ')')) |>
+  ggplot(mapping = aes(x = pct_extremism,
+                       y = reorder(program_label, pct_extremism),
+                       fill = network)) +
+  geom_col() +
+  theme_minimal() +
+  labs(x = 'Extremism Mentions (% of total)',
+       y = 'Program',
+       fill = 'Network')
+
+p4
+
+
+## Step 3: Make a word cloud -------------------------------------
+
+library(wordcloud2)
+
+tidy_transcripts |>
+  filter(program == 'Hannity') |>
+  # remove the stop words
+  anti_join(get_stopwords()) |>
+  group_by(word) |>
+  summarize(freq = n()) |>
+  arrange(-freq) |>
+  wordcloud2()
+
+tidy_transcripts |>
+  filter(program == 'Hannity') |>
+  # keep only the words that expressed emotion
+  inner_join(get_sentiments('bing')) |>
+  # filter out some of the filler words, like like
+  filter(!(word %in% c('trump', 'like', 'well', 'right'))) |>
+  group_by(word) |>
+  summarize(freq = n()) |>
+  arrange(-freq) |>
+  wordcloud2()
+
+
