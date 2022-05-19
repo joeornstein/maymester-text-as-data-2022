@@ -1,0 +1,11 @@
+program,network,date,url,selector,text
+Hannity,Fox News,5/18/2022,https://www.foxnews.com/transcript/hannity-biden-admin-playing-blame-game,.speakable:nth-child(6),
+Don Lemon Tonight,CNN,5/18/2022,https://transcripts.cnn.com/show/cnnt/date/2022-05-18/segment/01,.cnnBodyText:nth-child(8),
+CNN Newsroom,CNN,5/14/2022,https://transcripts.cnn.com/show/cnr/date/2022-05-14/segment/01,.cnnBodyText:nth-child(8),
+First Move with Julia Chatterley,CNN,5/17/2022,https://transcripts.cnn.com/show/fmjc/date/2022-05-17/segment/01,.cnnBodyText:nth-child(8),
+Inside Politics,CNN,5/11/2022,https://transcripts.cnn.com/show/ip/date/2022-05-11/segment/01,.cnnBodyText:nth-child(8),
+Your World,Fox News,5/10/2022,https://www.foxnews.com/transcript/your-world-on-ukraine-border-crisis-rick-scotts-tax-plan,.speakable:nth-child(6),
+First Move with Julia Chatterley,CNN,5/13/2022,https://transcripts.cnn.com/show/fmjc/date/2022-05-13/segment/01,.cnnBodyText:nth-child(8),
+Meet the Press,NBC,5/8/2022,https://www.nbcnews.com/meet-the-press/meet-press-may-8-2022-n1295220,.article-body__content,
+Special Report,Fox News,5/13/2022,https://www.foxnews.com/transcript/special-report-all-star-panel-baby-formula-shortage-facing-american-families,.speakable:nth-child(3),
+The Lead with Jake Tapper,CNN,5/13/2022,https://transcripts.cnn.com/show/cg/date/2022-05-13/segment/01,.cnnBodyText:nth-child(8),
