@@ -127,4 +127,13 @@ tidy_transcripts |>
   arrange(-freq) |>
   wordcloud2()
 
+# word cloud of just inflation vs . Ukraine
 
+tidy_transcripts |>
+  filter(program == 'Hannity') |>
+  # keep only the words that expressed emotion
+  filter(str_detect(word, 'inflatio|^pric|^shortage|^ukrai|^escal^|^nucl|^zelens|war|^russi')) |>
+  group_by(word) |>
+  summarize(freq = n()) |>
+  arrange(-freq) |>
+  wordcloud2()
