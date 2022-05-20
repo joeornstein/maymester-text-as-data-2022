@@ -8,12 +8,105 @@ description: |
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
+In the [webscraping tutorial](webscraping.html), we harvested text directly from the HTML code of a webpage. This can be pretty laborious, so fortunately, there are some websites that provide an easier path to collecting their data, called an Application Programming Interface (API). To introduce ourselves to APIs, we'll pull text data from Twitter using the fantastic `rtweet` package.
 
+If you don't have a Twitter account, take a moment to [sign up](twitter.com).
+
+## Example Workflow
+
+The following code chunk downloads the 100 most recent tweets that mention the president's account (`@potus`). Then it performs a rudimentary [sentiment analysis](sentiment-analysis.html), merging it with a sentiment lexicon and counting the number of positive vs. negative words in each tweet.
+
+```{r, eval = FALSE}
+library(tidyverse)
+library(tidytext)
+library(rtweet)
+
+tweets <- search_tweets('@potus', n = 100)
+
+tweets |> 
+  # create a unique ID for each tweet
+  mutate(ID = 1:nrow(tweets)) |> 
+  # tokenize to words
+  unnest_tokens(input = 'text',
+                output = 'word') |> 
+  # merge with sentiment lexicon
+  inner_join(get_sentiments('bing')) |> 
+  group_by(ID) |>
+  summarize(positive_words = sum(sentiment == 'positive'),
+            negative_words = sum(sentiment == 'negative'),
+            tweet_sentiment = (positive_words - negative_words) / (positive_words + negative_words)) |> 
+  ggplot(mapping = aes(x = tweet_sentiment)) + 
+  geom_histogram(color = 'black') +
+  theme_minimal() +
+  labs(x = 'Tweet Sentiment', y = 'Number of Tweets',
+       title = 'Sentiment of Tweets with @potus')
+```
+
+```{r, echo = FALSE}
+library(tidyverse)
+library(tidytext)
+library(rtweet)
+
+load('data/potus-tweets.RData')
+
+tweets |> 
+  # create a unique ID for each tweet
+  mutate(ID = 1:nrow(tweets)) |> 
+  # tokenize to words
+  unnest_tokens(input = 'text',
+                output = 'word') |> 
+  # merge with sentiment lexicon
+  inner_join(get_sentiments('bing')) |> 
+  group_by(ID) |>
+  summarize(positive_words = sum(sentiment == 'positive'),
+            negative_words = sum(sentiment == 'negative'),
+            tweet_sentiment = (positive_words - negative_words) / (positive_words + negative_words)) |> 
+  ggplot(mapping = aes(x = tweet_sentiment)) + 
+  geom_histogram(color = 'black') +
+  theme_minimal() +
+  labs(x = 'Tweet Sentiment', y = 'Number of Tweets',
+       title = 'Sentiment of Tweets with @potus')
+```
+
+And here is a word cloud of the most common words in those tweets.
+
+```{r}
+library(wordcloud2)
+
+tweets |> 
+  unnest_tokens(input = 'text', output = 'word') |> 
+  count(word) |> 
+  anti_join(get_stopwords()) |> 
+  # remove filler words and the potus handle itself
+  filter(!(word %in% c('potus', 'https', 't.co')), 
+         n > 4) |> 
+  # wordcloud2() needs a column called freq
+  rename(freq = n) |> 
+  wordcloud2()
+```
+
+## Introducing Yourself To Twitter
+
+If you end up wanting to use this extensively, you should apply for a [developer account](https://joeornstein.github.io/pols-3230/week-11.html#getting-twitter-data), which will permit you to download more tweets per month. Once you follow the instructions at that link, save the four enormous passwords it gives you in four separate text documents (you'll need the API key, API secret, access token, and access token). Then, at the beginning of your script, include the `create_token()` function to authenticate your credentials with Twitter.
+
+```{r, eval = FALSE}
+create_token(
+  app = "Maymester",
+  consumer_key = read_file('data/twitter-keys/api-key.txt'),
+  consumer_secret = read_file('data/twitter-keys/api-key-secret.txt'),
+  access_token = read_file('data/twitter-keys/access-token.txt'),
+  access_secret = read_file('data/twitter-keys/access-token-secret.txt')
+)
+```
+
+It is good practice not to include your passwords directly in the `R` script, especially if you intend to share you replication code with others, which is why we're reading them from an outside file.
 
 ## Practice Problems
 
+1.  Pull a sample of 1,000 tweets referencing "inflation", remove the stop words, and create a word cloud of the most common words in those tweets.
 
+2.  Pull a sample of 500 tweets referencing Ukraine and create a word cloud of the most common words (filtering out the stop words).
 
 ## Further Reading
 
-- [Michael Kearney's `rtweet` tutorial](https://mkearney.github.io/nicar_tworkshop/#1)
+-   [Michael Kearney's `rtweet` tutorial](https://mkearney.github.io/nicar_tworkshop/#1)

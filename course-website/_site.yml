@@ -14,7 +14,7 @@ navbar:
         - text: "Optical Character Recognition"
           href: under-construction.html
         - text: "APIs"
-          href: under-construction.html
+          href: twitter-api.html
     - text: "Tidy the Text"
       menu:
         - text: "Counting Words"

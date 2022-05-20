@@ -4,7 +4,7 @@ library(tidyverse)
 library(text.alignment)
 
 # load the bill texts
-d <- read_csv('data/raw/wilkerson-2015/AJPSPPACA.csv')
+d <- read_csv('data/raw/PolicyIdeasReplication/AJPSPPACA.csv')
 
 # bill texts from table 1
 index <- 1
@@ -20,5 +20,5 @@ sw
 # note that Wilkerson et al have a slightly different "affine" penalty for gaps, but the vanilla Smith-Waterman results are pretty close.
 
 
-smith_waterman('hello, my name is Joe', 'hello, my name is Joe')
+smith_waterman('hello, my name is Joe!!!', 'hello, my name is Joe!')
 
