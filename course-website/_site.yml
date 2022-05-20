@@ -12,24 +12,24 @@ navbar:
         - text: "Webscraping"
           href: webscraping.html
         - text: "Optical Character Recognition"
-          href: under-construction.html
+          href: OCR.html
         - text: "APIs"
           href: twitter-api.html
     - text: "Tidy the Text"
       menu:
         - text: "Counting Words"
-          href: under-construction.html
+          href: bag-of-words.html
         - text: "Word Embeddings"
-          href: under-construction.html
+          href: word-embeddings.html
         -
     - text: "Model the Text"
       menu:
         - text: "Multinomial Model"
-          href: under-construction.html
+          href: multinomial-model.html
         - text: "Vector Space Model"
-          href: under-construction.html
+          href: vector-space-model.html
         - text: "Topic Models"
-          href: under-construction.html
+          href: LDA.html
   right:
     - text: "Home"
       href: index.html
