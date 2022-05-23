@@ -41,3 +41,6 @@ vignettes/*.pdf
 # Raw data
 raw/
 twitter-keys/
+
+# dross folder
+_dross/
