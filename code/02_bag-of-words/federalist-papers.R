@@ -266,3 +266,27 @@ dmultinom(x = fed45_vector, prob = madison_vector + 0.1) /
 # Cosine Similarity (Federalist 45)
 cosine_similarity(fed45_vector, hamilton_vector)
 cosine_similarity(fed45_vector, madison_vector)
+
+# Note, however, that this test sometimes performs poorly distinguishing between Madison and Jay
+# for instance, Fed 10 (the "mischiefs of faction" paper)
+fed10_vector <- federalist_interesting_words |>
+  filter(name == 'Federalist No. 10') |>
+  count(word, .drop = FALSE) |>
+  pull(n) |>
+  # add names to make the vector more readable
+  set_names(interesting_words)
+
+fed10_vector
+
+dmultinom(x = fed10_vector, prob = jay_vector + 0.1) /
+  dmultinom(x = fed10_vector, prob = madison_vector + 0.1)
+
+cosine_similarity(fed10_vector, jay_vector)
+cosine_similarity(fed10_vector, madison_vector)
+
+# both our methods think that this paper looks like a Jay paper,
+# probably because of all the "always". This is a case where, failing
+# a crucial validation test, we should go back and refine our method,
+# including a set of words that does a good job distinguishing between
+# Madison and Jay in the same way "upon" and "whilst" do a good job distinguishing
+# between Hamilton and Madison.
