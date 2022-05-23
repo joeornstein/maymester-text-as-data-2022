@@ -1,6 +1,6 @@
 #' ---
 #'
-#' title: Tidy the Federalist Papers
+#' title: Tidy the Federalist Papers and predict authorship of the disputed Federalist No. 18
 #' date: 2022-05-23
 #'
 #' ---
@@ -135,3 +135,37 @@ jay_likelihood
 
 madison_likelihood / hamilton_likelihood
 madison_likelihood / jay_likelihood
+
+
+## Another way to think about the problem: the VECTOR SPACE MODEL ---------------------
+
+
+# cosine similarity
+
+# start with two dimensions, upon and whilst
+x1 <- c(20, 0)
+x2 <- c(0, 10)
+
+cosine_similarity <- function(x1, x2){
+  sum(x1*x2) / sqrt(sum(x1^2)) / sqrt(sum(x2^2))
+}
+
+cosine_similarity(x1, x2)
+
+# two vectors with an angle of 0
+x1 <- c(20, 20)
+x2 <- c(40, 40)
+
+# should give us a cosine similarity of 1
+cosine_similarity(x1, x2)
+
+
+# get the cosine similarity for Federalist 18 with all the authors
+cosine_similarity(fed18_vector, hamilton_vector)
+cosine_similarity(fed18_vector, madison_vector)
+cosine_similarity(fed18_vector, jay_vector)
+
+
+
+
+
