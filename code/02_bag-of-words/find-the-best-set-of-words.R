@@ -1,13 +1,20 @@
+#' ---
+#'
+#' Find the best set of words to distinguish Hamilton, Madison, and Jay's writing style
+#'
+#' ---
+
+
 
 library(tidyverse)
 library(tidytext)
 
-# Let's look at the Mosteller & Wallace (1964) list and try to determine which discriminate best between authors)
+# Let's look at the Mosteller & Wallace (1964) list and try to determine which discriminate best between authors
 mw1964_words <- c("a", "all", "also", "an", "and", "any", "are", "as", "at", "be", "been", "but", "by", "can", "do", "down",
                   "even", "every", "for", "from", "had", "has", "have", "her", "his", "if", "in", "into", "is", "it", "its",
                   "may", "more", "must", "my", "no", "not", "now", "of", "on", "one", "only", "or", "our", "shall", "should",
                   "so", "some", "such", "than", "that", "the", "their", "then", "there", "things", "this", "to", "up", "upon",
-                  "was", "were", "what", "when", "which", "while", "whilst", "who", "will", "with", "would", "your")
+                  "was", "were", "what", "when", "which", "who", "will", "with", "would", "your")
 
 tidy_federalist <- corpus::federalist |>
   # remove the preamble
@@ -44,7 +51,7 @@ frequency_table <- tidy_federalist |>
 
 
 # our new set of interesting words
-interesting_words <- frequency_table$word
+interesting_words <- factor(frequency_table$word)
 
 
 ## Validation test ---------------------------------
@@ -77,11 +84,13 @@ madison <- bags_of_words |>
   filter(author == 'Madison') |>
   pull(n) |>
   set_names(interesting_words)
+madison
 
 jay <- bags_of_words |>
   filter(author == 'Jay') |>
   pull(n) |>
   set_names(interesting_words)
+jay
 
 fed42 <- tidy_federalist |>
   filter(name == 'Federalist No. 42') |>
