@@ -1,7 +1,122 @@
 ---
-title: "Under Construction"
+title: "The Bag of Words"
+description: |
+  What if we ignored everything we know about language and just counted the words? Would that get us anywhere?
+bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
+
+Whenever we analyze a text as data, the first step after digitizing is to decide how we're gonig to represent the text quantitatively. The most straightforward such representation is the so-called "bag of words". We ignore word order, syntax, punctuation, meaning, and context, focusing only on the frequency with which words appear in the text. Though this representation throws out a lot of detail, it can nevertheless be useful, depending on what you're trying to accomplish.
+
+In chapter 5 @grimmerTextDataNew2021 present their "standard recipe" for representing a text corpus as a bag of words:
+
+1. Choose a unit of analysis
+2. Tokenize
+3. Reduce complexity
+4. Create a document-feature matrix
+
+Let's demonstrate this workflow using the State of the Union speeches application from Chapter 5. Our objective is to describe what words presidents when discussing the topic of manufacturing.
+
+## Step 1: Choose a Unit of Analysis
+
+The unit of analysis (or "document") for this application is the sentence. We want to just look at the sentences that include a mention of manufacturing, ignoring the rest of the speeches. To do so, let's load in the `sotu` dataset and use the excellent `unnest_tokens()` function from the `tidytext` package to split the corpus into sentences.
+
+```{r}
+library(tidyverse)
+library(tidytext)
+
+# load the data from the sotu package
+df <- sotu::sotu_meta |> 
+  mutate(text = sotu::sotu_text,
+         speech_id = 1:length(sotu::sotu_text))
+
+df
+
+# split into sentences
+tidy_sotu <- df |> 
+  unnest_tokens(input = 'text',
+                output = 'sentence',
+                token = 'sentences') |> 
+  # keep only the sentences that contain the word stem "manufactu"
+  filter(str_detect(sentence, 'manufactu'))
+
+tidy_sotu
+```
+
+Notice that the `unnest_tokens()` function converts all the words to lower case. We now have a dataframe where the unit of analysis is the sentence, containing every sentence in State of the Union speeches from 1790 to 2016 containing a mention of manufacturing.
+
+## Step 2: Tokenize
+
+Now that we have the corpus of text we're interested in studying, we can tokenize to the word level (using the same `unnest_tokens()` function) to create our bag of words.
+
+```{r}
+tidy_sotu <- tidy_sotu |> 
+  unnest_tokens(input = 'sentence',
+                output = 'word') |> 
+  # we're just interested in words that occur near manufacturing, so remove
+  # the manufacturing words themselves
+  filter(str_detect(word, 'manufactu', negate = TRUE))
+
+tidy_sotu
+```
+
+## Step 3: Reduce Complexity
+
+Because there are *so many* words in the English language, it can be advantageous to reduce the sparseness of the bag of words a bit. We can do so by removing "stop words" (words like articles and prepositions that are common but do not themselves contain meaning) and representing words with their "stem" (so words like "duties" and "duty" are represented by the same word stem, "duti").
+
+```{r}
+# remove stopwords
+tidy_sotu <- tidy_sotu |> 
+  anti_join(get_stopwords())
+
+tidy_sotu
+```
+
+Word stemming is available courtesy of the `SnoballC` package.
+
+```{r}
+library(SnowballC)
+
+wordStem('duty')
+wordStem('duties')
+
+tidy_sotu <- tidy_sotu |> 
+  mutate(word_stem = wordStem(word))
+
+tidy_sotu
+```
+
+## Step 4: Create the Document-Feature Matrix
+
+This step is only necessary if you need a document-feature matrix for a subsequent statistical model. If not, it can be useful for visualization and summary statistics to keep the word counts in a tidy dataframe.
+
+Here's a visualization of the word stems that presidents most commonly use when discussing manufacturing.
+
+```{r}
+library(wordcloud2)
+
+tidy_sotu |> 
+  count(word_stem) |> 
+  wordcloud2()
+```
+
+To convert the tidy dataframe to a matrix, we can use the `cast_dtm()` function from `tidytext`.
+
+```{r}
+dtm_sotu <- tidy_sotu |> 
+  count(speech_id, word_stem) |> 
+  cast_dtm(document = 'speech_id',
+           term = 'word_stem',
+           value = 'n')
+
+dtm_sotu
+```
+
+## Practice Problems
+
+1. Create a bag of words that co-occur in State of the Union sentences with the word "Mexico", or some other word of your choice.
+
+2. Create a bag of words representation of the Federalist Papers corpus, available in the `corpus` package (`corpus::federalist`).
