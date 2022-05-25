@@ -57,21 +57,27 @@ count(df, cluster)
 
 ## Step 3: Try to find words that distinguish one cluster from another ------------------------
 
-cluster_of_interest <- 5
+get_top_words <- function(tidy_federalist, cluster_of_interest){
+  tidy_federalist |>
+    left_join(cluster_assignments, by = 'name') |>
+    mutate(in_cluster = if_else(cluster == cluster_of_interest,
+                                'within_cluster', 'outside_cluster')) |>
+    # count the words in each cluster
+    group_by(in_cluster, word) |>
+    summarize(n = sum(n)) |>
+    pivot_wider(names_from = 'in_cluster',
+                values_from = 'n',
+                values_fill = 0) |>
+    # compute word shares
+    mutate(within_cluster = within_cluster / sum(within_cluster),
+           outside_cluster = outside_cluster / sum(outside_cluster)) |>
+    mutate(delta = within_cluster - outside_cluster) |>
+    arrange(-delta) |>
+    head(10) |>
+    pull(word)
+}
 
-tidy_federalist |>
-  left_join(cluster_assignments, by = 'name') |>
-  mutate(in_cluster = if_else(cluster == cluster_of_interest,
-                                       'within_cluster', 'outside_cluster')) |>
-  # count the words in each cluster
-  group_by(in_cluster, word) |>
-  summarize(n = sum(n)) |>
-  pivot_wider(names_from = 'in_cluster',
-              values_from = 'n',
-              values_fill = 0) |>
-  # compute word shares
-  mutate(within_cluster = within_cluster / sum(within_cluster),
-         outside_cluster = outside_cluster / sum(outside_cluster)) |>
-  mutate(delta = within_cluster - outside_cluster) |>
-  arrange(-delta) |>
-  head(10)
+
+get_top_words(tidy_federalist, 5)
+
+map(1:7, ~get_top_words(tidy_federalist, .x))
