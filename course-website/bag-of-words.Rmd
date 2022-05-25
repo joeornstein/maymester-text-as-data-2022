@@ -31,7 +31,8 @@ library(tidytext)
 # load the data from the sotu package
 df <- sotu::sotu_meta |> 
   mutate(text = sotu::sotu_text,
-         speech_id = 1:length(sotu::sotu_text))
+         speech_id = 1:length(sotu::sotu_text)) |> 
+  select(speech_id, president, year, text)
 
 df
 
