@@ -9,12 +9,15 @@
 library(tidyverse)
 library(tidytext)
 
-# Let's look at the Mosteller & Wallace (1964) list and try to determine which discriminate best between authors
+# Let's look at the list of stop words from Mosteller & Wallace (1964) +
+# the tidytext package and try to determine which discriminate best between authors
 mw1964_words <- c("a", "all", "also", "an", "and", "any", "are", "as", "at", "be", "been", "but", "by", "can", "do", "down",
                   "even", "every", "for", "from", "had", "has", "have", "her", "his", "if", "in", "into", "is", "it", "its",
                   "may", "more", "must", "my", "no", "not", "now", "of", "on", "one", "only", "or", "our", "shall", "should",
                   "so", "some", "such", "than", "that", "the", "their", "then", "there", "things", "this", "to", "up", "upon",
                   "was", "were", "what", "when", "which", "who", "will", "with", "would", "your")
+
+all_stopwords <- union(mw1964_words, get_stopwords()$word)
 
 tidy_federalist <- corpus::federalist |>
   # remove the preamble
@@ -24,7 +27,7 @@ tidy_federalist <- corpus::federalist |>
   # tokenize to the word level
   unnest_tokens(input = 'text',
                 output = 'word') |>
-  filter(word %in% mw1964_words) |>
+  filter(word %in% all_stopwords) |>
   mutate(author = factor(author),
          word = factor(word))
 
@@ -188,3 +191,5 @@ dmultinom(x = fed42,
           prob = madison + 0.1) /
   dmultinom(x = fed42,
             prob = hamilton + 0.1)
+
+save(interesting_words, file = 'data/federalist-papers/stop-words.RData')
