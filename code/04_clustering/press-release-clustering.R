@@ -36,6 +36,10 @@ for(i in 1:length(files_in_folder)){
 
 }
 
+# save the completed dataset
+save(df, file = 'data/press-releases/lautenberg.RData')
+
+
 ## Step 2: Tidy up the text -------------------------------
 
 tidy_press_releases <- df |>
