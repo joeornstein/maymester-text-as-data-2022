@@ -1,7 +1,29 @@
 ---
-title: "Under Construction"
+title: "Topic Models"
+description: |
+  A bag filled with bags of words.
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
+
+## Intuition
+
+The workhorse model for assigning topics to texts is the Latent Dirichlet Allocation (LDA), which is a sort of mix between the [bag of words model](multinomial-model.html) and [clustering](clustering.html). I like to think of it as a "bag of bags of words". Imagine that, rather than drawing from a single bag of words, authors first draw a *topic*, which has its own special bag of words. This approach is particularly useful when we think that a document may be about more than one topic, and we don't want to impose just one classification for each text like we do with k-means. 
+
+To demonstrate the workflow in `R`, let's take the set of Senator Lautenberg's press releases from the [clustering tutorial](clustering.html) and fit an LDA using the `topicmodels` package.
+
+
+
+
+## Practice Problems
+
+1. Fit an LDA to the Federalist Paper corpus (instead of focusing on stop words as in the authorship prediction task, I'd advice removing stop words and focusing on the substantive terms). What sorts of topics does the model produce? What value of $k$ yields the most sensible set of topics?
+
+
+
+## Further Reading
+
+- @grimmerTextDataNew2021 Chapter 13
+- [Text Ming With `R` Chapter 6](https://www.tidytextmining.com/topicmodeling.html)

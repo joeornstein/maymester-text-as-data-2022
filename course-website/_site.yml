@@ -28,6 +28,8 @@ navbar:
           href: multinomial-model.html
         - text: "Vector Space Model"
           href: vector-space-model.html
+        - text: "Clustering"
+          href: clustering.html
         - text: "Topic Models"
           href: LDA.html
   right:
