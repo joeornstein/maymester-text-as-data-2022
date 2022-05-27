@@ -1,9 +1,8 @@
 #' ---
 #'
-#' Intro to LDA topic models
+#' Intro to Latent Dirichlet Allocation topic models
 #'
 #' ---
-
 
 library(tidyverse)
 library(tidytext)
@@ -49,7 +48,7 @@ lautenberg_dtm
 
 ## Step 2: Fit the LDA model ----------------------------
 
-lautenberg_lda <- LDA(lautenberg_dtm, k = 4, control = list(seed = 42))
+lautenberg_lda <- LDA(lautenberg_dtm, k = 50, control = list(seed = 42))
 
 
 ## Step 3: Examine the topic-level probability vectors -----------------------
