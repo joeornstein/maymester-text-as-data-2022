@@ -8,14 +8,104 @@ description: |
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
+UNDER CONSTRUCTION
+
 ## Intuition
 
 The workhorse model for assigning topics to texts is the Latent Dirichlet Allocation (LDA), which is a sort of mix between the [bag of words model](multinomial-model.html) and [clustering](clustering.html). I like to think of it as a "bag of bags of words". Imagine that, rather than drawing from a single bag of words, authors first draw a *topic*, which has its own special bag of words. This approach is particularly useful when we think that a document may be about more than one topic, and we don't want to impose just one classification for each text like we do with k-means. 
 
 To demonstrate the workflow in `R`, let's take the set of Senator Lautenberg's press releases from the [clustering tutorial](clustering.html) and fit an LDA using the `topicmodels` package.
 
+```{r}
+library(tidyverse)
+library(tidytext)
+library(topicmodels)
+library(SnowballC)
+```
+
+## Step 1: Load the Texts and Tidy Up
+
+```{r}
+load('data/lautenberg-press-releases.RData')
 
 
+tidy_press_releases <- df |>
+  # remove a common preamble to each press release
+  mutate(text = str_replace_all(text,
+                                pattern = '     Senator Frank R  Lautenberg                                                                                                                      Press Release        of        Senator Lautenberg                                                                                ',
+                                replacement = '')) |>
+  # tokenize to the word level
+  unnest_tokens(input = 'text',
+                output = 'word') |>
+  # remove stop words
+  anti_join(get_stopwords()) |>
+  # remove numerals
+  filter(str_detect(word, '[0-9]', negate = TRUE)) |>
+  # generate word stems
+  mutate(word_stem = wordStem(word)) |>
+  # count up the word stems in each document
+  count(id, word_stem)
+```
+
+## Step 2: Convert to a Document-Term Matrix
+
+Note that unlike with the k-means clustering algorithm, LDA requires a matrix of counts, just like the [multinomial bag of words model](multinomial-model.html).
+
+```{r}
+lautenberg_dtm <- cast_dtm(data = tidy_press_releases,
+                           document = 'id',
+                           term = 'word_stem',
+                           value = 'n')
+lautenberg_dtm
+```
+
+## Step 3: Fit the Model
+
+Fitting an LDA is just one line of code. It's the interpretation, evaluation, and refinement that's the tricky part.
+
+```{r}
+lautenberg_lda <- LDA(lautenberg_dtm, 
+                      k = 25, 
+                      control = list(seed = 42))
+```
+
+## Step 4: Interpret the Topic-Level Probability Vectors
+
+Let's look at the most common terms by topic.
+
+```{r}
+# use the tidy() function from tidytext to extract the beta vector
+lautenberg_topics <- tidy(lautenberg_lda, matrix = 'beta')
+
+lautenberg_topics |>
+  group_by(topic) |>
+  slice_max(beta, n=10) |>
+  arrange(topic, -beta)
+```
+
+Surprise, surprise. The most common term is "Lautenberg". Instead of looking at the terms with the highest probability in each bag, let's look at the terms that are the most *over-represented*, compared to their probability in the average topic.
+
+```{r}
+lautenberg_topics |>
+  # get each word's average beta across topics
+  group_by(term) |>
+  mutate(average_beta = mean(beta)) |>
+  ungroup() |>
+  # compare beta in that topic with the average beta
+  mutate(delta = beta - average_beta) |>
+  # get the words with the largest difference in each topic
+  group_by(topic) |>
+  slice_max(delta, n = 10) |>
+  # plot it
+  ggplot(mapping = aes(x=delta, y=reorder(term, delta))) +
+  geom_col() +
+  theme_minimal() +
+  facet_wrap(~topic, scales = 'free') +
+  labs(x = 'Term Probability Compared to Average',
+       y = 'Term')
+```
+
+TODO: DESCRIBE THE TOPICS
 
 ## Practice Problems
 
@@ -27,3 +117,4 @@ To demonstrate the workflow in `R`, let's take the set of Senator Lautenberg's p
 
 - @grimmerTextDataNew2021 Chapter 13
 - [Text Ming With `R` Chapter 6](https://www.tidytextmining.com/topicmodeling.html)
+- For a principled procedure for varying $k$ to identify the best set of topics, see @wilkersonLargeScaleComputerizedText2017. 
