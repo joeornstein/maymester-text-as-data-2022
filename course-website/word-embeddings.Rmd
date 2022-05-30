@@ -1,7 +1,78 @@
 ---
-title: "Under Construction"
+title: "Word Embeddings"
+description: |
+  How to quantify what a word *means*.
+bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
+
+We'd like not just to count the frequency of words, but also get a sense of what the words *mean*. In a [bag of words representation](bag-of-words.html), we treat the words "president" and "executive" as having completely unique meaning. By comparison, a word embeddings approach encodes the fact that these words have some overlapping meaning by placing them close together in a vector space.
+
+```{r, echo = FALSE}
+knitr::include_graphics('img/morpheus.jpg')
+```
+
+The `textdata` package is a useful interface for downloading pre-trained word embeddings like GloVe. These off-the-shelf word embeddings tend to do a pretty good job at capturing meaning, even for political science specific applications [@rodriguezWordEmbeddingsWhat2021].
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(textdata)
+```
+
+For expository purposes, let's just get 400,000 of the 100-dimensional word embeddings:
+
+```{r, cache = TRUE}
+glove <- embedding_glove6b(dimensions = 100)
+```
+
+This comes to us as a matrix, but we can pivot it into a tidy dataframe.
+
+```{r}
+tidy_glove <- glove |>
+  pivot_longer(contains("d"),
+               names_to = "dimension")
+
+tidy_glove
+```
+
+It's difficult to visualize and interpret a 100-dimensional vector space, but we can explore which words have the highest cosine similarity. By looking at a word's "nearest neighbors", we can get a sense of the meaning that GloVe is assigning to it. The following function, adapted from [Emil Hvitfeldt and Julia Silge](https://smltar.com/embeddings.html), performs that computation.
+
+```{r}
+library(widyr)
+nearest_neighbors <- function(df, token) {
+  df |>
+    rename(item1 = token) |>
+    widely(
+      ~ {
+        y <- .[rep(token, nrow(.)), ]
+        res <- rowSums(. * y) /
+          (sqrt(rowSums(. ^ 2)) * sqrt(sum(.[token, ] ^ 2)))
+        matrix(res, ncol = 1, dimnames = list(x = names(res)))
+      },
+      sort = TRUE,
+      maximum_size = NULL
+    )(item1, dimension, value) %>%
+    select(-item2)
+}
+```
+
+What words are most closely associated with the word "democracy"?
+
+```{r, cache = TRUE}
+nearest_neighbors(tidy_glove, 'democracy')
+```
+
+## Practice Problems
+
+1.  Explore some of the stereotypes reflected in the GloVe embeddings. How close is the word "professor" to female names compared to male names? Hispanic names?
+2.  What about words that are ambiguous without context, like "bill" or "share"?
+
+## Further Reading
+
+-   @grimmerTextDataNew2021, Chapter 8.
+
+-    [Hvitfeldt & Silge](https://smltar.com/embeddings.html), Chapter 5.

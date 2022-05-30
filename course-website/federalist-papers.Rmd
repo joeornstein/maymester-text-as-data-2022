@@ -40,13 +40,12 @@ tidy_federalist |>
   wordcloud2()
 ```
 
-James Madison's bag of words has relatively more "whilst".
+By comparison, James Madison's bag of words has relatively more "whilst".
 
 ```{r}
 tidy_federalist |> 
   filter(author == 'Madison') |> 
-  count(word) |> 
-  wordcloud2()
+  count(word)
 ```
 
 Obviously this model leaves out a lot of detail about how authors actually write. It ignores word order, syntax, meaning, context, and intent. But for certain questions, such a simplified model may nevertheless prove useful. Let's consider Federalist Paper No. 18, counting the frequency of "upon", "whilst", and the other interesting stop words listed above.[^1]

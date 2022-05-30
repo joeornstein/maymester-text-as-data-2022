@@ -41,6 +41,10 @@ vignettes/*.pdf
 # Raw data
 raw/
 twitter-keys/
+word-embeddings_cache/
 
 # dross folder
 _dross/
+
+# for reasons I don't quite understand this one keeps popping up
+SOJ_3.png
