@@ -2,17 +2,16 @@
 title: "Topic Models"
 description: |
   A bag filled with bags of words.
+bibliography: references.bib
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-UNDER CONSTRUCTION
-
 ## Intuition
 
-The workhorse model for assigning topics to texts is the Latent Dirichlet Allocation (LDA), which is a sort of mix between the [bag of words model](multinomial-model.html) and [clustering](clustering.html). I like to think of it as a "bag of bags of words". Imagine that, rather than drawing from a single bag of words, authors first draw a *topic*, which has its own special bag of words. This approach is particularly useful when we think that a document may be about more than one topic, and we don't want to impose just one classification for each text like we do with k-means. 
+The workhorse model for assigning topics to texts is the Latent Dirichlet Allocation (LDA), which is a sort of mix between the [bag of words model](multinomial-model.html) and [clustering](clustering.html). I like to think of it as a "bag of bags of words". Imagine that, rather than drawing from a single bag of words, authors first draw a *topic*, which has its own special bag of words. This approach is particularly useful when we think that a document may be about more than one topic, and we don't want to impose just one classification for each text like we do with k-means.
 
 To demonstrate the workflow in `R`, let's take the set of Senator Lautenberg's press releases from the [clustering tutorial](clustering.html) and fit an LDA using the `topicmodels` package.
 
@@ -23,7 +22,7 @@ library(topicmodels)
 library(SnowballC)
 ```
 
-## Step 1: Load the Texts and Tidy Up
+## Step 1: Load the Documents and Tidy Up
 
 ```{r}
 load('data/lautenberg-press-releases.RData')
@@ -44,12 +43,14 @@ tidy_press_releases <- df |>
   # generate word stems
   mutate(word_stem = wordStem(word)) |>
   # count up the word stems in each document
-  count(id, word_stem)
+  count(id, word_stem) |> 
+  # remove empty strings
+  filter(word_stem != '')
 ```
 
 ## Step 2: Convert to a Document-Term Matrix
 
-Note that unlike with the k-means clustering algorithm, LDA requires a matrix of counts, just like the [multinomial bag of words model](multinomial-model.html).
+Note LDA requires a matrix of counts, just like the [multinomial bag of words model](multinomial-model.html).
 
 ```{r}
 lautenberg_dtm <- cast_dtm(data = tidy_press_releases,
@@ -63,9 +64,9 @@ lautenberg_dtm
 
 Fitting an LDA is just one line of code. It's the interpretation, evaluation, and refinement that's the tricky part.
 
-```{r}
+```{r, cache=TRUE}
 lautenberg_lda <- LDA(lautenberg_dtm, 
-                      k = 25, 
+                      k = 30, 
                       control = list(seed = 42))
 ```
 
@@ -83,9 +84,9 @@ lautenberg_topics |>
   arrange(topic, -beta)
 ```
 
-Surprise, surprise. The most common term is "Lautenberg". Instead of looking at the terms with the highest probability in each bag, let's look at the terms that are the most *over-represented*, compared to their probability in the average topic.
+Surprise, surprise. The most common term in each topic is "Lautenberg". Instead of looking at the terms with the highest probability in each bag, let's look at the terms that are the most *over-represented*, compared to their probability in the average topic.
 
-```{r}
+```{r, fig.height=15, fig.width=8}
 lautenberg_topics |>
   # get each word's average beta across topics
   group_by(term) |>
@@ -105,16 +106,89 @@ lautenberg_topics |>
        y = 'Term')
 ```
 
-TODO: DESCRIBE THE TOPICS
+Topics 6 and 9 appear to involve words related to transportation infrastructure, while topics 2, 5, 8, 17, 21, 23, 27, and 30 appear to be about security, the miltary, and foreign affairs. Topics 3, 7, 10, 13, 15, 19, 24, and 26 are all related to the environment. This all seems consistent with Senator Lautenberg's work as chairman of the Senate subcommittees on Homeland Security, Surface Transportation Security, and Superfund, Toxics, and Environmental Health -- which should give us some confidence in the results. Topics 28 and 29 look like the "partisan taunting" category identified in the book.
+
+## Step 5: Interpret the Document-Level Probability Vectors
+
+If these are roughly how we would categorize each topic...
+
+```{r}
+topic_labels <- tribble(~topic, ~label,
+                        1, 'Programs',
+                        2, 'Military',
+                        3, 'Environment',
+                        4, 'Health',
+                        5, 'Security',
+                        6, 'Transportation',
+                        7, 'Environment',
+                        8, 'Security',
+                        9, 'Transportation',
+                        10, 'Environment',
+                        11, 'Crime and Courts',
+                        12, 'Health',
+                        13, 'Environment',
+                        14, 'Programs',
+                        15, 'Environment',
+                        16, 'Health',
+                        17, 'Military',
+                        18, 'Health',
+                        19, 'Environment',
+                        20, 'Health',
+                        21, 'Military',
+                        22, 'Crime and Courts',
+                        23, 'Oil',
+                        24, 'Environment',
+                        25, 'New Jersey',
+                        26, 'Environment',
+                        27, 'Security',
+                        28, 'Partisan Taunting',
+                        29, 'Partisan Taunting',
+                        30, 'Security')
+```
+
+...then here's what the breakdown in topics across the `r nrow(df)` press releases looks like.
+
+```{r}
+lautenberg_documents <- tidy(lautenberg_lda, matrix = 'gamma')
+
+lautenberg_documents |> 
+  # join with topic labels
+  mutate(document = as.numeric(document)) |>
+  left_join(topic_labels, by = 'topic') |> 
+  # get the most probable document labels
+  filter(gamma > 0.3) |> 
+  arrange(document, -gamma) |> 
+  head(20)
+```
+
+Document 1 should be about Crime/Courts.
+
+```{r}
+df$text[1]
+```
+
+Document 2 should be about Health.
+
+```{r}
+df$text[2]
+```
+
+Document 5 seems to be some combination of Crime/Courts and Partisan Taunting.
+
+```{r}
+df$text[5]
+```
+
+Not bad! It's a press release that is mostly honoring Sandra Day O'Connor, but the last sentence is a dig at President Bush.
 
 ## Practice Problems
 
-1. Fit an LDA to the Federalist Paper corpus (instead of focusing on stop words as in the authorship prediction task, I'd advice removing stop words and focusing on the substantive terms). What sorts of topics does the model produce? What value of $k$ yields the most sensible set of topics?
+1.  Fit an LDA to the Federalist Paper corpus (instead of focusing on stop words as in the authorship prediction task, I'd advice removing stop words and focusing on the substantive terms). What sorts of topics does the model produce? What value of $k$ yields the most sensible set of topics?
 
-
+2.  Fit an LDA to the [UN Security Council speeches about Afghanistan](https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/OM9RG8) [@schoenfeldDiscursiveLandscapesUnsupervised2018], available at `data/un-security-council/UNSC_Afghan_Spchs_Meta.RData` on the repository.
 
 ## Further Reading
 
-- @grimmerTextDataNew2021 Chapter 13
-- [Text Ming With `R` Chapter 6](https://www.tidytextmining.com/topicmodeling.html)
-- For a principled procedure for varying $k$ to identify the best set of topics, see @wilkersonLargeScaleComputerizedText2017. 
+-   @grimmerTextDataNew2021 Chapter 13
+-   [Text Ming With `R` Chapter 6](https://www.tidytextmining.com/topicmodeling.html)
+-   For a principled procedure for varying $k$ to identify the best set of topics, see @wilkersonLargeScaleComputerizedText2017 .

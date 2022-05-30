@@ -41,7 +41,7 @@ head(xkcd)
 
 But if we *do* care about word order, then we'll need to be more careful about pre-processing the image before conducting OCR. For example, let's try to read in the text on page 3 of [this document](img/SOJ.pdf) about the California Supreme Court. The `pdftools` package can convert the page to an image, when we can then OCR.
 
-```{r}
+```{r, cache=TRUE}
 library(pdftools)
 
 pdf_convert('img/SOJ.pdf', pages = 3, dpi = 600, filenames = 'img/SOJ.png')
