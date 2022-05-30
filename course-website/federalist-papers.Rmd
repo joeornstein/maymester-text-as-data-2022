@@ -13,7 +13,7 @@ A great entry point for modeling text as data is the now classic problem of gues
 
 ## Multinomial Model
 
-To motivate this model, suppose that each author owns a literal bag of words. When they are writing, they randomly draw each word from the bag, replacing it when they're done writing it down. Alexander Hamilton's bag of words has a *lot* of the word "upon", while James Madison's has relatively more "whilst".
+To motivate this model, suppose that each author owns a literal bag of words. When they are writing, they randomly draw each word from the bag, replacing it when they're done writing it down. Evidently, Alexander Hamilton's word bag has a *lot* of the word "upon".
 
 ```{r}
 library(tidyverse)
@@ -38,14 +38,18 @@ tidy_federalist |>
   filter(author == 'Hamilton') |> 
   count(word) |> 
   wordcloud2()
+```
 
+James Madison's bag of words has relatively more "whilst".
+
+```{r}
 tidy_federalist |> 
-  filter(author == 'Hamilton') |> 
+  filter(author == 'Madison') |> 
   count(word) |> 
   wordcloud2()
 ```
 
-Let's consider Federalist Paper No. 18, counting the frequency of "upon", "whilst", and the other interesting stop words listed above.[^1]
+Obviously this model leaves out a lot of detail about how authors actually write. It ignores word order, syntax, meaning, context, and intent. But for certain questions, such a simplified model may nevertheless prove useful. Let's consider Federalist Paper No. 18, counting the frequency of "upon", "whilst", and the other interesting stop words listed above.[^1]
 
 [^1]: This list was inspired by Chapter 5 of @imaiQuantitativeSocialScience2017. More on how to identify discriminating words in a later section.
 
@@ -118,7 +122,7 @@ dmultinom(x = fed18_vector,
           prob = jay_vector)
 ```
 
-The computation above makes a very strong assumption about Jay: because he never uses the word "whilst" in any of his Federalist papers, we assume that he would *never* *ever* use the word whilst in another paper. We can do better by regularizing our estimates, adding a small positive number to each vector (Laplace smoothing). to encode the possibility that Jay might someday use the word "whilst", even if we've never seen him do it.
+The computation above makes a very strong assumption about Jay: because he never uses the word "whilst" in any of his Federalist papers, we assume that he would *never* *ever* use the word whilst in another paper. We can do better by regularizing our estimates, adding a small positive number to each vector (Laplace smoothing) to encode the possibility that Jay might someday use the word "whilst", even if we've never seen him do it.
 
 ```{r}
 hamilton_likelihood <- dmultinom(x = fed18_vector,
@@ -144,7 +148,180 @@ Another way to model the bag of words is to think of each set of word counts as 
 Cosine similarity captures this idea, because the cosine of 90 degrees is zero, and the cosine of 0 degrees is 1. Let's compute the cosine similarity between Madison, Hamilton, and Jay's known writings with the term vector from the disputed Federalist No. 18.
 
 ```{r}
+# define cosine similarity
+cosine_similarity <- function(x1, x2){
+  sum(x1*x2) / sqrt(sum(x1^2)) / sqrt(sum(x2^2))
+}
 
+# get the cosine similarity for Federalist 18 with all the authors
+cosine_similarity(fed18_vector, hamilton_vector)
+cosine_similarity(fed18_vector, madison_vector)
+cosine_similarity(fed18_vector, jay_vector)
 ```
 
+This yields a similar result to what we found with the multinomial model. The cosine similarity between the disputed paper and Madison's other papers is largest, suggesting he is the author.
+
 ## Validation, Validation, Validation
+
+Whenever you develop a method to measure or predict some quantity of interest, it is imperative that you first assess its performance against a known benchmark before applying it to new data. This process is called *validation*, and @grimmerTextDataNew2021 repeatedly emphasize how central it is to the text-as-data workflow. So the procedure we just created predicts that Madison wrote Federalist No. 18. How much should we trust that prediction?
+
+To gain confidence in our approach, let's see what it predicts for papers where authorship is *not* in dispute. If it correctly predicts the authors of the known texts, then we can be more certain it's doing a good job with the unknown texts.
+
+For the validation test, we'll repeat the same steps as before, except we hold out the validation set when training the model. If we're trying to predict whether Madison wrote Federalist 10, then it would be cheating to include Federalist 10 in the vector of things we know about Madison's writing style.
+
+```{r}
+# get the Federalist 10 word count vector
+fed10_vector <- tidy_federalist |>
+  mutate(word = factor(word)) |> 
+  filter(name == 'Federalist No. 10') |>
+  count(word, .drop = FALSE) |>
+  pull(n) |>
+  # add names to make the vector more readable
+  set_names(interesting_words)
+
+fed10_vector
+
+# Recompute Madison's word count vector, omitting Federalist 10
+madison_vector <- tidy_federalist |> 
+  mutate(word = factor(word)) |> 
+  filter(name != 'Federalist No. 10',
+         author == 'Madison') |> 
+  count(word, .drop = FALSE) |> 
+  pull(n) |> 
+  set_names(interesting_words)
+
+madison_vector
+
+dmultinom(x = fed10_vector,
+          prob = hamilton_vector)
+
+dmultinom(x = fed10_vector,
+          prob = madison_vector)
+
+dmultinom(x = fed10_vector,
+          prob = jay_vector)
+```
+
+Already we can see a problem. The words we chose before may do a good job distinguishing between Hamilton and Madison (it's *inconceivable* that Hamilton would have written an entire paper without a single use of the word "upon", so the model correctly rules him out), but it struggles with distinguishing Jay's style from Madison's style, especially for a paper that only contains 3 of the chosen stop words. Because the word "always" appears the most frequently, the model incorrectly predicts that Jay wrote Federalist No. 10, not Madison.
+
+Let's see if we can find a set of *discriminating words* that do a better job distinguishing between all three authors.[^2] To do so, I'll start with the list of stop words from @mostellerInferenceDisputedAuthorship1964 and add in the list of stop words from the `tidytext` package.
+
+[^2]: See @grimmerTextDataNew2021 Chapter 11 for more on this process.
+
+```{r}
+mw1964_words <- c("a", "all", "also", "an", "and", "any", "are", "as", "at", "be", "been", "but", "by", "can", "do", "down",
+                  "even", "every", "for", "from", "had", "has", "have", "her", "his", "if", "in", "into", "is", "it", "its",
+                  "may", "more", "must", "my", "no", "not", "now", "of", "on", "one", "only", "or", "our", "shall", "should",
+                  "so", "some", "such", "than", "that", "the", "their", "then", "there", "things", "this", "to", "up", "upon",
+                  "was", "were", "what", "when", "which", "who", "will", "with", "would", "your")
+
+all_stopwords <- union(mw1964_words, get_stopwords()$word)
+```
+
+This yields a list of 186 potential words. Next, we'll count up how frequently each author used each word, keeping only the words that one author used three times more frequently than another auhor (the number three is arbitrary, but as we'll see it yields a manageable list of distinctive words).
+
+```{r}
+tidy_federalist <- corpus::federalist |>
+  # tokenize to the word level
+  unnest_tokens(input = 'text',
+                output = 'word') |>
+  filter(word %in% all_stopwords) |>
+  mutate(author = factor(author),
+         word = factor(word))
+
+frequency_table <- tidy_federalist |>
+  filter(author %in% c('Hamilton', 'Jay', 'Madison')) |>
+  count(author, word, .drop = FALSE) |>
+  pivot_wider(names_from = 'author',
+              values_from = 'n') |>
+  # normalize by each author's number of words
+  mutate(Hamilton = Hamilton / sum(Hamilton),
+         Jay = Jay / sum(Jay),
+         Madison = Madison / sum(Madison)) |>
+  mutate(Hamilton_Jay = Hamilton / Jay,
+         Hamilton_Madison = Hamilton / Madison,
+         Jay_Madison = Jay / Madison) |>
+  # just keep the words that one author uses 3 times more often than another
+  filter(Hamilton_Jay > 3 |
+           Hamilton_Jay < 0.33333 |
+           Hamilton_Madison > 3 |
+           Hamilton_Madison < 0.33333 |
+           Jay_Madison > 3 |
+           Jay_Madison < 0.33333)
+```
+
+This leaves us with 38 words to include in our multinomial model / document vectors.
+
+```{r}
+interesting_words <- factor(frequency_table$word)
+
+interesting_words
+```
+
+Let's see how the modified list performs on the validation test.
+
+```{r}
+# keep only the new list of words
+tidy_federalist <-
+  tidy_federalist |>
+  filter(word %in% interesting_words) |> 
+  mutate(word = factor(word))
+
+# compute the new Federalist 10 vector
+fed10_vector <- tidy_federalist |>
+  filter(name == 'Federalist No. 10') |>
+  count(word, .drop = FALSE) |>
+  pull(n) |>
+  # add names to make the vector more readable
+  set_names(interesting_words)
+
+fed10_vector
+
+# get word count vectors for each author
+madison_vector <- tidy_federalist |> 
+  filter(name != 'Federalist No. 10',
+         author == 'Madison') |> 
+  count(word, .drop = FALSE) |> 
+  pull(n) |> 
+  set_names(interesting_words)
+
+madison_vector
+
+hamilton_vector <- tidy_federalist |> 
+  filter(author == 'Hamilton') |> 
+  count(word, .drop = FALSE) |> 
+  pull(n) |> 
+  set_names(interesting_words)
+
+hamilton_vector
+
+jay_vector <- tidy_federalist |> 
+  filter(author == 'Jay') |> 
+  count(word, .drop = FALSE) |> 
+  pull(n) |> 
+  set_names(interesting_words)
+
+jay_vector
+
+
+dmultinom(x = fed10_vector,
+          prob = madison_vector + 0.1) /
+dmultinom(x = fed10_vector,
+          prob = hamilton_vector + 0.1) 
+
+dmultinom(x = fed10_vector,
+          prob = madison_vector + 0.1) /
+dmultinom(x = fed10_vector,
+          prob = jay_vector + 0.1)
+
+cosine_similarity(madison_vector, fed10_vector)
+cosine_similarity(hamilton_vector, fed10_vector)
+cosine_similarity(jay_vector, fed10_vector)
+```
+
+This is much nicer. Both methods now correctly identify Madison as the author of Federalist 10. A more thorough model-development loop might iterate through validation and refinement a few more times, holding out a different validation set each time. But this is the basic workflow.
+
+## Practice Problems
+
+1.  Conduct more validation tests on undisputed Federalist Papers to see if the list of words we came up with in the last section does a good job.
+2.  See if you can create a model that accurately classifies whether a [State of the Union speech](bag-of-words.html) was delivered in the 19th or 20th century.

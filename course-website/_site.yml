@@ -25,7 +25,7 @@ navbar:
     - text: "Model the Text"
       menu:
         - text: "Federalist Paper Authorship"
-          href: multinomial-model.html
+          href: federalist-papers.html
         - text: "Clustering"
           href: clustering.html
         - text: "Topic Models"

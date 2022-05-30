@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 ## Intuition
 
-The workhorse model for assigning topics to texts is the Latent Dirichlet Allocation (LDA), which is a sort of mix between the [bag of words model](multinomial-model.html) and [clustering](clustering.html). I like to think of it as a "bag of bags of words". Imagine that, rather than drawing from a single bag of words, authors first draw a *topic*, which has its own special bag of words. This approach is particularly useful when we think that a document may be about more than one topic, and we don't want to impose just one classification for each text like we do with k-means.
+The workhorse model for assigning topics to texts is the Latent Dirichlet Allocation (LDA), which is a sort of mix between the [bag of words model](federalist-papers.html) and [clustering](clustering.html). I like to think of it as a "bag of bags of words". Imagine that, rather than drawing from a single bag of words, authors first draw a *topic*, which has its own special bag of words. This approach is particularly useful when we think that a document may be about more than one topic, and we don't want to impose just one classification for each text like we do with k-means.
 
 To demonstrate the workflow in `R`, let's take the set of Senator Lautenberg's press releases from the [clustering tutorial](clustering.html) and fit an LDA using the `topicmodels` package.
 
@@ -46,11 +46,13 @@ tidy_press_releases <- df |>
   count(id, word_stem) |> 
   # remove empty strings
   filter(word_stem != '')
+
+head(tidy_press_releases)
 ```
 
 ## Step 2: Convert to a Document-Term Matrix
 
-Note LDA requires a matrix of counts, just like the [multinomial bag of words model](multinomial-model.html).
+Note LDA requires a matrix of counts, just like the [multinomial bag of words model](federalist-papers.html).
 
 ```{r}
 lautenberg_dtm <- cast_dtm(data = tidy_press_releases,
@@ -84,7 +86,7 @@ lautenberg_topics |>
   arrange(topic, -beta)
 ```
 
-Surprise, surprise. The most common term in each topic is "Lautenberg". Instead of looking at the terms with the highest probability in each bag, let's look at the terms that are the most *over-represented*, compared to their probability in the average topic.
+Surprise, surprise. The most common term in each topic is often "Lautenberg". Instead of looking at the terms with the highest probability in each bag, let's look at the terms that are the most *over-represented*, compared to their probability in the average topic.
 
 ```{r, fig.height=15, fig.width=8}
 lautenberg_topics |>
@@ -164,19 +166,23 @@ lautenberg_documents |>
 Document 1 should be about Crime/Courts.
 
 ```{r}
-df$text[1]
+print_text <- function(text){
+  cat(str_wrap(text), sep = '\n')
+}
+
+print_text(df$text[1])
 ```
 
 Document 2 should be about Health.
 
 ```{r}
-df$text[2]
+print_text(df$text[2])
 ```
 
 Document 5 seems to be some combination of Crime/Courts and Partisan Taunting.
 
 ```{r}
-df$text[5]
+print_text(df$text[5])
 ```
 
 Not bad! It's a press release that is mostly honoring Sandra Day O'Connor, but the last sentence is a dig at President Bush.
