@@ -81,9 +81,9 @@ cor(tweets$sentiment_score, tweets$bing_score,
 # accuracy measure
 tweets |>
   filter(sentiment_score %in% c(3, -3)) |>
-  count((sentiment_score == 3 & bing_score > 0) |
+  count(correct = (sentiment_score == 3 & bing_score > 0) |
           sentiment_score == -3 & bing_score < 0) |>
-  pivot_wider(names_from = `(sentiment_score == 3 & bing_score > 0) | ...`,
+  pivot_wider(names_from = 'correct',
               values_from = 'n') |>
   mutate(pct_correct = `TRUE` / (`TRUE` + `FALSE`))
 
