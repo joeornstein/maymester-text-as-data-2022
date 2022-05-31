@@ -45,7 +45,7 @@ tidy_tweets <- tweets |>
 tidy_tweets <- tidy_tweets |>
   inner_join(get_sentiments('bing'), by = 'word') |>
   # take out the inappropriate words
-  filter(!(word %in% c('trump', 'supreme', 'like')))
+  filter(!(word %in% c('trump', 'supreme', 'like', 'masterpiece')))
 
 # to create a sentiment score, just count up positive and negative
 # sentiments
