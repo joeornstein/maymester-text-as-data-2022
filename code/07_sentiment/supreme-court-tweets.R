@@ -23,6 +23,12 @@ tweets |>
   filter(sentiment_score == 0) |>
   filter(expert1 < 0 | expert2 < 0 | expert3 < 0)
 
+# how is the inter-coder reliability? (Fleiss' Kappa)
+library(irr)
+tweets |>
+  select(expert1, expert2, expert3) |>
+  kappam.fleiss()
+
 # did we get better at coding over time?
 tweets |>
   mutate(index = 1:nrow(tweets)) |>
@@ -31,7 +37,8 @@ tweets |>
   mutate(early_tweet = as.numeric(index <= 100)) |>
   filter(!is.na(everyone_agreed)) |>
   group_by(early_tweet) |>
-  summarize(pct_agreement = mean(everyone_agreed))
+  summarize(pct_agreement = mean(everyone_agreed),
+            kappa = kappam.fleiss(cbind(expert1, expert2, expert3))$value)
 
 
 ## Step 2: Tokenize and merge with a sentiment lexicon -----------
