@@ -9,32 +9,12 @@ library(tidyverse)
 library(tidytext)
 library(tidymodels)
 
-## Step 1: Load the Federalist papers -----------------
+## Step 1: Load the Federalist papers and record the term frequency for a bunnch of words -----------------
 
-fed <- corpus::federalist |>
-  filter(author %in% c('Madison', 'Hamilton')) |>
-  mutate(author = factor(author))
+words_to_keep <- c('the', 'upon', 'whilst') |>
+  union(get_stopwords()$word)
 
-
-# split the known texts into train and test sets
-set.seed(42)
-
-# training set is a random 80% where we know the authorship
-train <- fed |>
-  slice_sample(prop = 0.8)
-
-# test set is the rest of the labeled data
-test <- fed |>
-  anti_join(train)
-
-# disputed set
-disputed <- corpus::federalist |>
-  filter(is.na(author))
-
-## Step 2: Define the features of the data ---------------------
-
-# get the frequency of the word upon
-train <- train |>
+tidy_federalist <- corpus::federalist |>
   # remove the preamble
   mutate(text = str_replace_all(text,
                                 'To the People of the State of New York',
@@ -42,19 +22,43 @@ train <- train |>
   # tokenize to the word level
   unnest_tokens(input = 'text',
                 output = 'word') |>
+  # just keep a subset of words
+  filter(word %in% words_to_keep) |>
+  mutate(word = factor(word)) |>
   # count up the number of each word
-  count(name, author, word) |>
+  count(name, author, word,
+        .drop = FALSE) |>
   # compute the tf
   bind_tf_idf(term = 'word',
               document = 'name',
               n = 'n') |>
-  # just keep the word "upon"
-  filter(word %in% c('the', 'upon', 'whilst')) |>
   select(name, author, word, tf) |>
   pivot_wider(names_from = 'word',
               values_from = 'tf',
               values_fill = 0)
 
+# split the known texts into train and test sets
+set.seed(42)
+
+# training set is a random 80% where we know the authorship
+train <- tidy_federalist |>
+  filter(author %in% c('Hamilton', 'Madison')) |>
+  # tidymodels wants the label to be a factor
+  mutate(author = factor(author)) |>
+  slice_sample(prop = 0.8)
+
+# test set is the rest of the labeled data
+test <- tidy_federalist |>
+  filter(author %in% c('Hamilton', 'Madison')) |>
+  mutate(author = factor(author)) |>
+  anti_join(train)
+
+# disputed set
+disputed <- tidy_federalist |>
+  filter(is.na(author))
+
+
+## Step 2: Fit a one-variable logistic regression ---------------
 
 # how well does this variable predict authorship in the training set?
 ggplot(data = train,
@@ -65,51 +69,63 @@ ggplot(data = train,
 
 # fit a logistic regression
 model1 <- logistic_reg() |>
-  fit(formula = hamilton ~ upon_tf,
-      data = train |>
-        mutate(hamilton = factor(hamilton)))
+  fit(formula = author ~ upon,
+      data = train)
+
+summary(model1$fit)
 
 # in-sample fit
-train <- train |>
-  mutate(predicted_value = predict(model1, train))
+sum(train$author == predict(model1, train)$.pred_class)
 
 ## Step 3: Take the model we trained and see how good a job it does on the test set --------------------
 
-# get the frequency of the word upon
-test <- test |>
-  # recode the paper names as factor (so they don't get dropped later)
-  mutate(name = factor(name)) |>
-  # remove the preamble
-  mutate(text = str_replace_all(text,
-                                'To the People of the State of New York',
-                                '')) |>
-  # tokenize to the word level
-  unnest_tokens(input = 'text',
-                output = 'word') |>
-  # count up the number of each word
-  count(name, word) |>
-  # compute the tf
-  bind_tf_idf(term = 'word',
-              document = 'name',
-              n = 'n') |>
-  # just keep the word "upon"
-  filter(word == 'upon') |>
-  select(name, upon_tf = tf) |>
-  # merge that back with the original dataset
-  right_join(test, by = 'name') |>
-  # if there were any papers with *no* upons, replace that missing value with 0
-  mutate(upon_tf = replace_na(upon_tf, 0))
+sum(test$author == predict(model1, test)$.pred_class)
 
-test <- test |>
-  mutate(predicted_value = predict(model1, test))
+## Let's try it again, but with some more predictors ---------
 
+model2 <- logistic_reg() |>
+  fit(formula = author ~ upon + the + whilst,
+      data = train)
 
+summary(model2$fit)
 
+# in-sample fit
+sum(train$author == predict(model2, train)$.pred_class)
 
+# out-of-sample fit
+sum(test$author == predict(model2, test)$.pred_class)
 
+## Try it with EVEN MORE WORDS ----------------------
+
+# remove the names of the papers
+# (if we tell the model the paper names, then it will
+# *definitely* overfit)
+train <- train |>
+  select(-name)
+
+# fit a logistic regression
+model3 <- logistic_reg() |>
+  fit(formula = author ~ .,
+      data = train)
+
+summary(model3$fit)
 
 
+# what's the in-sample accuracy?
+sum(train$author == predict(model3, train)$.pred_class)
 
+# what about out-of-sample fit?
+sum(test$author == predict(model3, test)$.pred_class)
 
+# yeah sure fine it does okay on the test set, but let's
+# look at the disputed texts (which we're pretty sure are Madison's)
 
+disputed <- disputed |>
+  mutate(predicted_value_1 = predict(model1, disputed)$.pred_class,
+         predicted_value_2 = predict(model2, disputed)$.pred_class,
+         predicted_value_3 = predict(model3, disputed)$.pred_class,
+  )
 
+table(disputed$predicted_value_1)
+table(disputed$predicted_value_2)
+table(disputed$predicted_value_3)
