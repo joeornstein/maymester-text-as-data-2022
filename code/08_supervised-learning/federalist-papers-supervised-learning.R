@@ -11,19 +11,20 @@ library(tidymodels)
 
 ## Step 1: Load the Federalist papers -----------------
 
+fed <- corpus::federalist |>
+  filter(author %in% c('Madison', 'Hamilton')) |>
+  mutate(author = factor(author))
+
+
 # split the known texts into train and test sets
 set.seed(42)
 
 # training set is a random 80% where we know the authorship
-train <- corpus::federalist |>
-  filter(author %in% c('Madison', 'Hamilton')) |>
-  slice_sample(prop = 0.8) |>
-  # create the label
-  mutate(hamilton = as.numeric(author == 'Hamilton'))
+train <- fed |>
+  slice_sample(prop = 0.8)
 
 # test set is the rest of the labeled data
-test <- corpus::federalist |>
-  filter(author %in% c('Madison', 'Hamilton')) |>
+test <- fed |>
   anti_join(train)
 
 # disputed set
@@ -34,8 +35,6 @@ disputed <- corpus::federalist |>
 
 # get the frequency of the word upon
 train <- train |>
-  # recode the paper names as factor (so they don't get dropped later)
-  mutate(name = factor(name)) |>
   # remove the preamble
   mutate(text = str_replace_all(text,
                                 'To the People of the State of New York',
@@ -44,23 +43,22 @@ train <- train |>
   unnest_tokens(input = 'text',
                 output = 'word') |>
   # count up the number of each word
-  count(name, word) |>
+  count(name, author, word) |>
   # compute the tf
   bind_tf_idf(term = 'word',
               document = 'name',
               n = 'n') |>
   # just keep the word "upon"
-  filter(word == 'upon') |>
-  select(name, upon_tf = tf) |>
-  # merge that back with the original dataset
-  right_join(train, by = 'name') |>
-  # if there were any papers with *no* upons, replace that missing value with 0
-  mutate(upon_tf = replace_na(upon_tf, 0))
+  filter(word %in% c('the', 'upon', 'whilst')) |>
+  select(name, author, word, tf) |>
+  pivot_wider(names_from = 'word',
+              values_from = 'tf',
+              values_fill = 0)
 
 
 # how well does this variable predict authorship in the training set?
 ggplot(data = train,
-       mapping = aes(x=upon_tf, y=hamilton)) +
+       mapping = aes(x=upon, y=as.numeric(author == 'Hamilton'))) +
   geom_point() +
   geom_smooth(method = 'lm', se = FALSE)
 
