@@ -30,6 +30,8 @@ navbar:
           href: clustering.html
         - text: "Topic Models"
           href: LDA.html
+        - text: "Sentiment Analysis"
+          href: sentiment-analysis.html
   right:
     - text: "Home"
       href: index.html
