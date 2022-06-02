@@ -72,30 +72,44 @@ model1 <- logistic_reg() |>
   fit(formula = author ~ upon,
       data = train)
 
-summary(model1$fit)
+tidy(model1)
 
 # in-sample fit
-sum(train$author == predict(model1, train)$.pred_class)
+train |>
+  select(name, author) |>
+  bind_cols(predict(model1, train)) |>
+  accuracy(truth = author, estimate = .pred_class)
 
 ## Step 3: Take the model we trained and see how good a job it does on the test set --------------------
 
-sum(test$author == predict(model1, test)$.pred_class)
+# out-of-sample fit
+test |>
+  select(name, upon, author) |>
+  bind_cols(predict(model1, test)) |>
+  arrange(-upon) |>
+  accuracy(truth = author, estimate = .pred_class)
 
-## Let's try it again, but with some more predictors ---------
+## Step 3: Let's try it again, but with some more predictors ---------
 
 model2 <- logistic_reg() |>
   fit(formula = author ~ upon + the + whilst,
       data = train)
 
-summary(model2$fit)
+tidy(model2)
 
 # in-sample fit
-sum(train$author == predict(model2, train)$.pred_class)
+train |>
+  select(name, author) |>
+  bind_cols(predict(model2, train)) |>
+  accuracy(truth = author, estimate = .pred_class)
 
 # out-of-sample fit
-sum(test$author == predict(model2, test)$.pred_class)
+test |>
+  select(name, author) |>
+  bind_cols(predict(model2, test)) |>
+  accuracy(truth = author, estimate = .pred_class)
 
-## Try it with EVEN MORE WORDS ----------------------
+## Step 4: Try it with ALL THE WORDS ----------------------
 
 # remove the names of the papers
 # (if we tell the model the paper names, then it will
@@ -108,17 +122,22 @@ model3 <- logistic_reg() |>
   fit(formula = author ~ .,
       data = train)
 
-summary(model3$fit)
+tidy(model3)
 
 
-# what's the in-sample accuracy?
-sum(train$author == predict(model3, train)$.pred_class)
+# in-sample fit
+train |>
+  select(author) |>
+  bind_cols(predict(model3, train)) |>
+  accuracy(truth = author, estimate = .pred_class)
 
-# what about out-of-sample fit?
-sum(test$author == predict(model3, test)$.pred_class)
+# out-of-sample fit
+test |>
+  select(name, author) |>
+  bind_cols(predict(model3, test)) |>
+  accuracy(truth = author, estimate = .pred_class)
 
-# yeah sure fine it does okay on the test set, but let's
-# look at the disputed texts (which we're pretty sure are Madison's)
+# this model is *way* overfit
 
 disputed <- disputed |>
   mutate(predicted_value_1 = predict(model1, disputed)$.pred_class,
@@ -129,3 +148,33 @@ disputed <- disputed |>
 table(disputed$predicted_value_1)
 table(disputed$predicted_value_2)
 table(disputed$predicted_value_3)
+
+## Step 5: Regularization --------------------------
+
+# Supervised machine learning, in a nutshell, is about trying to hit that
+# sweet spot, a model that's complex enough to get low error in the training set
+# but not so complex that it overfits to the training set and does terrible on the test set.
+
+# The way we automate that process is *regularization*, adding a term to the model's
+# objective function that keeps it from getting too complex.
+
+
+# LASSO is a regularized linear model
+model4 <- logistic_reg(penalty = 0.01, mixture = 1) |>
+  set_engine('glmnet') |>
+  fit(formula = author ~ .,
+      data = train)
+
+tidy(model4)
+
+# in-sample fit
+train |>
+  select(author) |>
+  bind_cols(predict(model4, train)) |>
+  accuracy(truth = author, estimate = .pred_class)
+
+# out-of-sample fit
+test |>
+  select(name, author) |>
+  bind_cols(predict(model4, test)) |>
+  accuracy(truth = author, estimate = .pred_class)
