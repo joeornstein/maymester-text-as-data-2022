@@ -95,7 +95,7 @@ model1 |>
        y = 'Word Stem')
 
 
-## Check out-of-sample prediction ----------------
+## Step 3: Check out-of-sample prediction ----------------
 
 # does it do a good job at prediction though?
 
@@ -112,6 +112,30 @@ test |>
   accuracy(truth = party, estimate = .pred_class)
 
 
+## Alternative Step 3: V-fold Cross-validation ---------------------------
 
+# one way to not be fooled by the in-sample accuracy of your model
+# is through *cross-validation*, where we repeatedly sample observations
+# to be in the test set until each one has been in the test set once.
+# then we assess the accuracy of predictions on those held out observations,
+# to get an *in-sample* measure of *out-of-sample* fit.
+# ...it's weird.
 
+# first, assign each observation in train to a "fold"
+folds <- vfold_cv(train |>
+                    select(-id),
+                  v = 10)
+folds
 
+# now, fit the model on each training fold, assessing performance
+# on the out-of-sample fold
+model_specification <-
+  logistic_reg(penalty = 0.01, mixture = 1) |>
+  set_engine('glmnet')
+
+model2 <- workflow() |>
+  add_model(model_specification) |>
+  add_formula(party ~ .) |>
+  fit_resamples(folds)
+
+collect_metrics(model2)
