@@ -133,9 +133,97 @@ model_specification <-
   logistic_reg(penalty = 0.01, mixture = 1) |>
   set_engine('glmnet')
 
-model2 <- workflow() |>
+cv_fit <- workflow() |>
   add_model(model_specification) |>
   add_formula(party ~ .) |>
   fit_resamples(folds)
 
-collect_metrics(model2)
+collect_metrics(cv_fit)
+
+## Step 4: Tuning the hyperparameters ----------------------
+
+# in each of the LASSO models we fit above, we sort of arbitrarily set the penalty
+# parameter to 0.01. Why 0.01? I dunno. It seemed to do good.
+# But we can do better than that, by *tuning* that penalty parameter to optimize
+# cross-validation accuracy.
+
+
+# first, create the model specification, with tune() as a placeholder for the
+# penalty parameter
+model_specification <-
+  logistic_reg(penalty = tune(), mixture = 1) |>
+  set_engine('glmnet')
+
+# next, create a set of penalty parameters that we want to try.
+# fortunately, tidymodels has some convenient functions here,
+# like penalty(), which gives a range of sensible parameters to try
+penalty_grid <- grid_regular(penalty(), levels = 30)
+penalty_grid
+
+# NOTE: This is what that line of code is doing above. Making a tibble with a range of sensible values to try:
+# penalty_grid <- tibble(
+#   penalty = 10^seq(-10,0,length.out = 30)
+# )
+# penalty_grid
+
+# now for the heart of the tuning procedure, tune_grid()
+model_workflow <- workflow() |>
+  add_model(model_specification) |>
+  add_formula(party ~ .)
+
+tune_rs <- tune_grid(
+  model_workflow,
+  folds,
+  grid = penalty_grid
+)
+
+collect_metrics(tune_rs)
+
+autoplot(tune_rs) +
+  labs(
+    title = "Lasso model performance across regularization penalties",
+    subtitle = "Performance metrics can be used to identity the best penalty"
+  )
+
+# looks like 0.01 was pretty good, but something smaller would be even better!
+collect_metrics(tune_rs) |>
+  filter(.metric == 'accuracy') |>
+  arrange(-mean)
+
+best_penalty <- tune_rs |>
+  select_best(metric = 'accuracy') |>
+  pull(penalty)
+
+# let's fit that model
+model2 <- logistic_reg(penalty = best_penalty, mixture = 1) |>
+  set_engine('glmnet') |>
+  fit(formula = party ~ .,
+      data = train |>
+        select(-id) )
+
+# look at the coefficients
+tidy(model2)
+
+model2 |> tidy() |> filter(estimate != 0) |> nrow()
+
+# visualize the coefficients
+model2 |>
+  tidy() |>
+  filter(abs(estimate) > 100) |>
+  ggplot(mapping = aes(x=estimate, y=reorder(term, -estimate))) +
+  geom_col() +
+  labs(x = 'Coefficient Estimate',
+       caption = 'Positive is More Republican',
+       y = 'Word Stem')
+
+# in-sample fit
+train |>
+  select(party) |>
+  bind_cols(predict(model2, train)) |>
+  accuracy(truth = party, estimate = .pred_class)
+
+# out-of-sample fit
+test |>
+  select(party) |>
+  bind_cols(predict(model2, test)) |>
+  accuracy(truth = party, estimate = .pred_class)
