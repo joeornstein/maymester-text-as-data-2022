@@ -178,3 +178,5 @@ test |>
   select(name, author) |>
   bind_cols(predict(model4, test)) |>
   accuracy(truth = author, estimate = .pred_class)
+
+predict(model4, disputed)
