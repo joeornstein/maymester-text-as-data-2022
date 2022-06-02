@@ -58,4 +58,12 @@ tidy_speeches <- d |>
               values_from = 'tf',
               values_fill = 0)
 
+# add the party labels back in
+tidy_speeches <- d |>
+  mutate(id = 1:nrow(d)) |>
+  select(id, party) |>
+  left_join(tidy_speeches, by = 'id')
+
+
+## Step 2
 
