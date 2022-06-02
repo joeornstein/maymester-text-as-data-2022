@@ -46,7 +46,6 @@ tidy_speeches <- d |>
   filter(word_stem != '') |>
   # count up the words
   count(id, word_stem) |>
-  # drop the words that only get used once or twice
   # compute term frequency
   bind_tf_idf(document = 'id',
               term = 'word_stem',
@@ -62,8 +61,57 @@ tidy_speeches <- d |>
 tidy_speeches <- d |>
   mutate(id = 1:nrow(d)) |>
   select(id, party) |>
-  left_join(tidy_speeches, by = 'id')
+  left_join(tidy_speeches, by = 'id') |>
+  mutate(party = factor(party))
 
 
-## Step 2
+# split into training and test sets
+speech_split <- initial_split(data = tidy_speeches,
+                              prop = 0.8)
+
+train <- training(speech_split)
+test <- testing(speech_split)
+
+
+## Step 2: Fit a LASSO model ---------------------------
+
+model1 <- logistic_reg(penalty = 0.01, mixture = 1) |>
+  set_engine('glmnet') |>
+  fit(formula = party ~ .,
+      data = train |>
+        select(-id) )
+
+# look at the coefficients
+tidy(model1)
+
+# visualize the coefficients
+model1 |>
+  tidy() |>
+  filter(abs(estimate) > 50) |>
+  ggplot(mapping = aes(x=estimate, y=reorder(term, -estimate))) +
+  geom_col() +
+  labs(x = 'Coefficient Estimate',
+       caption = 'Positive is More Republican',
+       y = 'Word Stem')
+
+
+## Check out-of-sample prediction ----------------
+
+# does it do a good job at prediction though?
+
+# in-sample fit
+train |>
+  select(party) |>
+  bind_cols(predict(model1, train)) |>
+  accuracy(truth = party, estimate = .pred_class)
+
+# out-of-sample fit
+test |>
+  select(party) |>
+  bind_cols(predict(model1, test)) |>
+  accuracy(truth = party, estimate = .pred_class)
+
+
+
+
 
