@@ -277,7 +277,11 @@ rf_tune <- tune_grid(
 
 collect_metrics(rf_tune)
 
+autoplot(rf_tune) +
+  labs(
+    title = "Random forest performance across regularization penalties",
+  )
 
-
-
+ggsave(filename = 'course-website/img/random-forest-tune.png',
+       height = 5, width = 8)
 
