@@ -68,7 +68,7 @@ test <- testing(tweet_split)
 
 ## Step 2: Fit a model --------------------------------
 
-model1 <- logistic_reg(penalty = 0.01, mixture = 1) |>
+model1 <- logistic_reg(penalty = 0.001, mixture = 1) |>
   fit(.target ~ .,
       data = train |>
         select(-.id))

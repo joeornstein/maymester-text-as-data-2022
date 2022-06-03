@@ -257,11 +257,10 @@ test |>
 rf_specification <- rand_forest(mode = 'classification',
                                 mtry = tune(),
                                 trees = 1001,
-                                min_n = tune())
+                                min_n = 10)
 
 
-rf_grid <- grid_regular(mtry(range = c(1, 5)),
-                        min_n(range = c(2, 40)),
+rf_grid <- grid_regular(mtry(range = c(30, 100)),
                         levels = 5)
 rf_grid
 
