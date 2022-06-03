@@ -14,8 +14,8 @@ d <- read_csv('data/raw/Sentiment140/training.1600000.processed.noemoticon.csv',
 
 d <- d |>
   mutate(.id = 1:nrow(d)) |>
-  select(.id, target, text) |>
-  mutate(target = factor(target)) |>
+  select(.id, .target = target, text) |>
+  mutate(.target = factor(.target)) |>
   slice_sample(n = 1e5)
 
 # pick which word stems to keep
@@ -52,3 +52,25 @@ tidy_tweets <- d |>
               values_from = 'tf',
               values_fill = 0,
               names_repair = 'unique')
+
+# put the labels back in
+tidy_tweets <- d |>
+  select(.id, .target) |>
+  right_join(tidy_tweets, by = '.id')
+
+
+# split the data into train and test sets
+tweet_split <- initial_split(tidy_tweets,
+                             prop = 0.8)
+
+train <- training(tweet_split)
+test <- testing(tweet_split)
+
+## Step 2: Fit a model --------------------------------
+
+model1 <- logistic_reg(penalty = 0.01, mixture = 1) |>
+  fit(.target ~ .,
+      data = train |>
+        select(-.id))
+
+
