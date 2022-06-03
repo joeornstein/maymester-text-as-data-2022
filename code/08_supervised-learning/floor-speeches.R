@@ -227,3 +227,57 @@ test |>
   select(party) |>
   bind_cols(predict(model2, test)) |>
   accuracy(truth = party, estimate = .pred_class)
+
+
+## Try a random forest ------------------------
+
+rf_model <- rand_forest(mode = 'classification',
+                        mtry = 3,
+                        trees = 1001,
+                        min_n = 20)
+
+model3 <- rf_model |>
+  fit(formula = party ~ .,
+      data = train |>
+        select(-id))
+
+# in-sample fit
+train |>
+  select(party) |>
+  bind_cols(predict(model3, train)) |>
+  accuracy(truth = party, estimate = .pred_class)
+
+# out-of-sample fit
+test |>
+  select(party) |>
+  bind_cols(predict(model3, test)) |>
+  accuracy(truth = party, estimate = .pred_class)
+
+# not so great. Let's tune the hyperparameters
+rf_specification <- rand_forest(mode = 'classification',
+                                mtry = tune(),
+                                trees = 1001,
+                                min_n = tune())
+
+
+rf_grid <- grid_regular(mtry(range = c(1, 5)),
+                        min_n(range = c(2, 40)),
+                        levels = 5)
+rf_grid
+
+rf_workflow <- workflow() |>
+  add_model(rf_specification) |>
+  add_formula(party ~ .)
+
+rf_tune <- tune_grid(
+  rf_workflow,
+  folds,
+  grid = rf_grid
+)
+
+collect_metrics(rf_tune)
+
+
+
+
+
