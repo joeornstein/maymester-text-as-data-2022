@@ -20,6 +20,9 @@ tweets <- trump_tweets_df |>
   filter(.source %in% c('iPhone', 'Android')) |>
   mutate(.source = factor(.source))
 
+# (notice that I'm putting a dot in front of all these
+# column names, on the off chance that words like "source"
+# or "id" appear in the corpus)
 
 library(lubridate)
 
@@ -42,10 +45,10 @@ words_to_keep <- tweets |>
                 output = 'word') |>
   count(word) |>
   # remove numerals, URLs
-  filter(str_detect(word, '.com|.net|.edu|.gov|http', negate = TRUE)) |>
+  filter(str_detect(word, '.co|.com|.net|.edu|.gov|http', negate = TRUE)) |>
   filter(str_detect(word, '[0-9]', negate = TRUE)) |>
   # remove rare words
-  filter(n > 1) |>
+  filter(n > 2) |>
   pull(word)
 
 # tokenize
@@ -68,15 +71,75 @@ tidy_tweets <- tweets |>
   left_join(tidy_tweets, by = '.id')
 
 
+# split into train and test sets
+tweet_split <- initial_split(tidy_tweets,
+                             prop = 0.8)
+
+train <- training(tweet_split)
+test <- testing(tweet_split)
+
+# fit three logistic regression models:
+# underfit, overfit, and regularized
+
+# underfit model
+model1 <- logistic_reg() |>
+  fit(formula = .source ~ crooked + dumb + emails +
+        crowds + hillary + winning + weak,
+      data = train)
+
+tidy(model1)
+
+# in-sample fit
+train |>
+  bind_cols(predict(model1, train)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+
+# out-of-sample fit
+test |>
+  bind_cols(predict(model1, test)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+# overfit
+model2 <- logistic_reg() |>
+  fit(formula = .source ~ .,
+      data = train |>
+        select(-.id, -.created))
+
+tidy(model2)
+
+# in-sample fit
+train |>
+  bind_cols(predict(model2, train)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+# out-of-sample fit
+test |>
+  bind_cols(predict(model2, test)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+# does no better than the underfit model
+
 # fit a model
-lasso_model <- logistic_reg(penalty = 0.01, mixture = 1) |>
+model3 <- logistic_reg(penalty = 0.01, mixture = 1) |>
   set_engine('glmnet') |>
   fit(formula = .source ~ .,
-      data = tidy_tweets |>
+      data = train |>
         select(-.id, -.created))
 
 
-tidy(lasso_model)
+tidy(model3)
+
+
+# in-sample fit
+train |>
+  bind_cols(predict(model3, train)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+# out-of-sample fit
+test |>
+  bind_cols(predict(model3, test)) |>
+  accuracy(truth = .source, estimate = .pred_class)
 
 
 # cross-validation:
