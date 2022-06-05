@@ -100,6 +100,12 @@ test |>
   bind_cols(predict(model1, test)) |>
   accuracy(truth = .source, estimate = .pred_class)
 
+test |>
+  bind_cols(predict(model1, test)) |>
+  conf_mat(truth = .source, estimate = .pred_class) |>
+  autoplot(type = 'heatmap')
+
+
 # overfit
 model2 <- logistic_reg() |>
   fit(formula = .source ~ .,
@@ -118,7 +124,12 @@ test |>
   bind_cols(predict(model2, test)) |>
   accuracy(truth = .source, estimate = .pred_class)
 
-# does no better than the underfit model
+test |>
+  bind_cols(predict(model2, test)) |>
+  conf_mat(truth = .source, estimate = .pred_class) |>
+  autoplot(type = 'heatmap')
+
+# does just as bad as the underfit model
 
 # fit a regularized model (LASSO)
 model3 <- logistic_reg(penalty = 0.01, mixture = 1) |>
@@ -141,6 +152,10 @@ test |>
   bind_cols(predict(model3, test)) |>
   accuracy(truth = .source, estimate = .pred_class)
 
+test |>
+  bind_cols(predict(model3, test)) |>
+  conf_mat(truth = .source, estimate = .pred_class) |>
+  autoplot(type = 'heatmap')
 
 # cross-validation:
 
@@ -163,8 +178,69 @@ lasso_cv <- workflow() |>
 
 collect_metrics(lasso_cv)
 
+## Tune the hyperparameters through cross validation -----
+
+lasso_specification <- logistic_reg(mode = 'classification',
+                                    penalty = tune(),
+                                    mixture = 1)
+
+penalty_grid <- grid_regular(penalty(), levels = 10)
+
+lasso_workflow <-
+  workflow() |>
+  add_model(lasso_specification) |>
+  add_formula(.source ~ .)
+
+lasso_tune <- tune_grid(
+  lasso_workflow,
+  folds,
+  grid = penalty_grid
+)
+
+collect_metrics(lasso_tune)
+
+autoplot(lasso_tune) +
+  labs(
+    title = "LASSO performance across regularization penalties",
+  )
+
+best_penalty <- lasso_tune |>
+  select_best(metric = 'accuracy') |>
+  pull(penalty)
+
+# fit that best model
+model4 <- logistic_reg(penalty = best_penalty, mixture = 1) |>
+  set_engine('glmnet') |>
+  fit(formula = .source ~ .,
+      data = train |>
+        select(-.id, -.created))
+
+
+# nonzero coefficients
+model4 |> tidy() |> filter(estimate != 0) |> nrow()
+
+
+# in-sample fit
+train |>
+  bind_cols(predict(model4, train)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+# out-of-sample fit
+test |>
+  bind_cols(predict(model4, test)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+test |>
+  bind_cols(predict(model4, test)) |>
+  conf_mat(truth = .source, estimate = .pred_class) |>
+  autoplot(type = 'heatmap')
+
+
+
+## Random Forest ---------------------------
+
 rf_specification <-
-  rand_forest(mode = 'classification', mtry = 5, min_n = 10, trees = 1001) |>
+  rand_forest(mode = 'classification', mtry = 25, min_n = 10, trees = 1001) |>
   set_engine('ranger')
 
 rf_cv <- workflow() |>
@@ -174,7 +250,6 @@ rf_cv <- workflow() |>
 
 collect_metrics(rf_cv)
 
-## Tune the hyperparameters through cross validation -----
 
 rf_specification <- rand_forest(mode = 'classification',
                                 mtry = tune(),
