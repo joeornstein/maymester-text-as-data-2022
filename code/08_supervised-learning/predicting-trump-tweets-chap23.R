@@ -174,10 +174,64 @@ rf_cv <- workflow() |>
 
 collect_metrics(rf_cv)
 
+## Tune the hyperparameters through cross validation -----
+
+rf_specification <- rand_forest(mode = 'classification',
+                                mtry = tune(),
+                                trees = 1001,
+                                min_n = 10)
+
+
+rf_grid <- grid_regular(mtry(range = c(5, 100)),
+                        levels = 5)
+rf_grid
+
+rf_workflow <- workflow() |>
+  add_model(rf_specification) |>
+  add_formula(.source ~ .)
+
+rf_tune <- tune_grid(
+  rf_workflow,
+  folds,
+  grid = rf_grid
+)
+
+collect_metrics(rf_tune)
+
+autoplot(rf_tune) +
+  labs(
+    title = "Random forest performance across regularization penalties",
+  )
 
 
 
 
+
+
+
+
+
+
+## tesing naive Bayes -----------------
+
+library(naivebayes)
+nb <- naive_bayes(
+  formula = .source ~ .,
+  data = train |>
+    select(-.id, -.created),
+  Laplace = 0.1)
+
+summary(nb)
+
+# in-sample fit
+train |>
+  bind_cols(.pred_class = predict(nb, train)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+# out-of-sample fit
+test |>
+  bind_cols(.pred_class = predict(nb, test)) |>
+  accuracy(truth = .source, estimate = .pred_class)
 
 
 # Further Reading:
