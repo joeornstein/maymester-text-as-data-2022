@@ -68,7 +68,7 @@ tidy_tweets <- tweets |>
 
 tidy_tweets <- tweets |>
   select(.id, .source, .created) |>
-  left_join(tidy_tweets, by = '.id')
+  right_join(tidy_tweets, by = '.id')
 
 
 # split into train and test sets
@@ -120,7 +120,7 @@ test |>
 
 # does no better than the underfit model
 
-# fit a model
+# fit a regularized model (LASSO)
 model3 <- logistic_reg(penalty = 0.01, mixture = 1) |>
   set_engine('glmnet') |>
   fit(formula = .source ~ .,
@@ -145,7 +145,7 @@ test |>
 # cross-validation:
 
 # first, assign each observation in train to a "fold"
-folds <- vfold_cv(tidy_tweets |>
+folds <- vfold_cv(train |>
                     select(-.id, -.created),
                   v = 10)
 folds
