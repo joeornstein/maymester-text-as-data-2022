@@ -46,5 +46,8 @@ word-embeddings_cache/
 # dross folder
 _dross/
 
+# big model fit objects
+model-fits/
+
 # for reasons I don't quite understand this one keeps popping up
 SOJ_3.png
