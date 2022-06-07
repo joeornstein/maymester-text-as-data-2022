@@ -87,9 +87,9 @@ get_classification_accuracy <- function(df, .country, .year){
 
 }
 
-iran1977_accuracy <- get_classification_accuracy(df = iran_speeches,
+iran1975_accuracy <- get_classification_accuracy(df = iran_speeches,
                                                  .country = 'IRN',
-                                                 .year = 1977)
+                                                 .year = 1975)
 
 
 
