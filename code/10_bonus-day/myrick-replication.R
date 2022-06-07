@@ -20,6 +20,9 @@ iran_speeches <- all_speeches |>
 
 rm(all_speeches)
 
+iran_speeches |>
+  count(iso3, session_startyr)
+
 # get the words we're going to keep
 vocab <- read_csv('data/raw/myrick-2021/Data/external_threat_textdata_study1_fixedvocab.csv')
 
@@ -32,6 +35,9 @@ words_to_keep <- vocab |>
 ## Create a function to compute the classification accuracy -------------
 
 get_classification_accuracy <- function(df, .country, .year){
+
+  # print start time
+  print(paste('Fitting', .country, .year, 'model at', Sys.time()))
 
   # subset the data
   df <- df |>
@@ -72,16 +78,18 @@ get_classification_accuracy <- function(df, .country, .year){
     add_formula(.party ~ .) |>
     fit_resamples(folds)
 
+  # print end time
+  print(paste('Completed', .country, .year, 'model at', Sys.time()))
+
   collect_metrics(cv_fit) |>
     filter(.metric == 'accuracy') |>
     pull(mean)
 
-
 }
 
-iran1979_accuracy <- get_classification_accuracy(df = iran_speeches,
+iran1977_accuracy <- get_classification_accuracy(df = iran_speeches,
                                                  .country = 'IRN',
-                                                 .year = 1979)
+                                                 .year = 1977)
 
 
 
