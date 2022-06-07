@@ -39,6 +39,14 @@ tweets <- d |>
   # join with the tweets dataframe
   right_join(tweets, by = 'tweet_id')
 
+# plot the agreement with expert coders
+ggplot(data = tweets,
+       mapping = aes(x = expert1 + expert2 + expert3,
+                     y = avg_negativity)) +
+  geom_jitter(alpha = 0.5) +
+  labs(x = 'Expert Code',
+       y = 'Crowd Code')
+
 
 ## Bradley Terry approach ----------------------
 
@@ -68,6 +76,22 @@ bt_model <- BTm(outcome = cbind(win1, win2),
                 data = d)
 
 # get the coefficients
-bt_model |>
+bradley_terry_estimates <- bt_model |>
   tidy() |>
-  arrange(estimate)
+  mutate(tweet_id = str_replace_all(term, 'tweet', '')) |>
+  select(tweet_id, bradley_terry_coefficient = estimate) |>
+  mutate(tweet_id = factor(tweet_id, levels = ids))
+
+# merge with the tweets dataset
+tweets <- tweets |>
+  left_join(bradley_terry_estimates, by = 'tweet_id') |>
+  mutate(bradley_terry_coefficient = replace_na(bradley_terry_coefficient, 0))
+
+# plot Bradley-Terry scores against simple average
+ggplot(data = tweets,
+       mapping = aes(x = avg_negativity,
+                     y = bradley_terry_coefficient)) +
+  geom_point()
+
+
+
