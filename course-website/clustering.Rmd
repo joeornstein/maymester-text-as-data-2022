@@ -8,6 +8,10 @@ description: |
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-Broadly speaking, we can divide the approaches for modeling text data into two camps: supervised learning and unsupervised learning. [Supervised learning](sentiment-analysis.html) approaches tend to be the most familiar to social scientists -- there is some outcome we'd like to predict, so we fit a function observable covariates to try and predict it. In the context of text as data, this means we have a set of labeled documents, and we fit a model to see how well we can predict the labels (e.g. predicting the authorship of the [Federalist Papers](federalist-papers.html)).
+Broadly speaking, we can divide the approaches for modeling text data into two camps: supervised learning and unsupervised learning. [Supervised learning](sentiment-analysis.html) approaches tend to be the most familiar to social scientists -- there is some outcome we'd like to predict, so we fit a function of observable covariates to try and predict it. In the context of text as data, this means we have a set of labeled documents, and we fit a model to see how well we can predict the labels (e.g. predicting the authorship of the [Federalist Papers](federalist-papers.html)).
 
-Unsupervised learning, by comparison, is less about prediction and more about discovery. You start with a set of *unlabeled* documents, and ask the computer to see if it can find a sensible way to organize them. Are there patterns of language that distinguish one set of documents from others? These sorts of approaches, which include both 
+Unsupervised learning, by comparison, is less about prediction and more about *discovery*. You start with a set of *unlabeled* documents, and ask the computer to see if it can find a sensible way to organize them. Are there patterns of language that distinguish one set of documents from others? What words can help identify a cluster of documents, by appearing within them more frequently than one would expect by chance? These sorts of approaches, which include both clustering and [topic models](LDA.html), require a healthy dose of human judgment to derive meaningful insigts, and they often serve as the first stage of a research agenda that moves from discovery and exploration to explanation, prediction, and inference.
+
+## K-means Clustering
+
+Chapter 12 of 
