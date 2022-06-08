@@ -25,7 +25,7 @@ library(SnowballC)
 ## Step 1: Load the Documents and Tidy Up
 
 ```{r}
-load('data/lautenberg-press-releases.RData')
+load('data/press-releases/lautenberg-press-releases.RData')
 
 
 tidy_press_releases <- df |>
