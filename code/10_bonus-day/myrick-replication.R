@@ -18,10 +18,21 @@ iran_speeches <- all_speeches |>
          session_startyr >= 1975,
          session_startyr <= 1983)
 
+# Just keep the speeches about Cuba from 1955 - 1969
+cuba_speeches <- all_speeches |>
+  filter(iso3 == 'CUB',
+         session_startyr >= 1955,
+         session_startyr <= 1969)
+
+
 rm(all_speeches)
 
 iran_speeches |>
   count(iso3, session_startyr)
+
+cuba_speeches |>
+  count(iso3, session_startyr)
+
 
 # get the words we're going to keep
 vocab <- read_csv('data/raw/myrick-2021/Data/external_threat_textdata_study1_fixedvocab.csv')
@@ -90,6 +101,22 @@ get_classification_accuracy <- function(df, .country, .year){
 iran1975_accuracy <- get_classification_accuracy(df = iran_speeches,
                                                  .country = 'IRN',
                                                  .year = 1975)
+
+
+for(y in unique(cuba_speeches$session_startyr)){
+
+  for(cntry in unique(cuba_speeches$iso3)){
+
+    get_classification_accuracy(df = cuba_speeches,
+                                .country = cntry,
+                                .year = y) |>
+      print()
+
+  }
+
+
+
+}
 
 
 
