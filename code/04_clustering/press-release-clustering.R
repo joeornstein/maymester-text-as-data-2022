@@ -144,13 +144,16 @@ library(textdata)
 # get the glove embedding vectors
 glove <- embedding_glove6b(dimensions = 100)
 
-glove_tokens <- glove_tokens
+# convert to a matrix (it will make the computation easier)
+glove_tokens <- glove$token
 
-# convert to a matrix (it's gonna make the computation easier)
 glove <- glove |>
   select(-token) |>
   as.matrix()
+
 rownames(glove) <- glove_tokens
+
+glove[100:120,1:3]
 
 
 # get all the press releases and count up the words for each
