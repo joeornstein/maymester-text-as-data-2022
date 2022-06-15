@@ -65,7 +65,7 @@ The k-means clustering algorithm searches for a set of $k$ centroids that yield 
 
 [^1]: Allison Horst has a delightful illustrated explanation of how the algorithm works on [this page](https://www.tidymodels.org/learn/statistics/k-means/).
 
-```{r}
+```{r, cache = TRUE}
 set.seed(42)
 
 km <- kmeans(x = lautenberg_dtm,
@@ -75,7 +75,7 @@ km <- kmeans(x = lautenberg_dtm,
 table(km$cluster)
 ```
 
-Making sense of this algorithm's output is tricky. Sure, we simplified the problem a bit. We started with 558 documents each represented by a 7,073-dimensional vector, and now we have 4 document *clusters* represented by a 7,073-dimensional vector.
+Making sense of this algorithm's output is tricky. Sure, we simplified the problem a bit. We started with 558 documents, each represented by a 7,073-dimensional vector. Now we have 4 document *clusters*, each represented by a 7,073-dimensional vector.
 
 ```{r, echo = FALSE}
 knitr::include_graphics('img/thanks.gif')
@@ -83,7 +83,7 @@ knitr::include_graphics('img/thanks.gif')
 
 So...what do we do with those?
 
-One of the most common ways to interpret k-means clusters is to generate a list of the most distinctive words from each cluster. Then we can look at which words show up more frequently in one cluster than any other, and use that information to assign labels to the clusters.
+One of the most common ways to interpret the k-means clusters is to generate a list of the most distinctive words from each cluster. Then we can look at which words show up more frequently in one cluster than any other, and use that information to assign labels to the clusters.
 
 ```{r}
 # function to find the words that are most overrepresented in the cluster mean for a given cluster
@@ -92,16 +92,148 @@ get_top_words <- function(centers, cluster_of_interest, n = 10){
     sort(decreasing = TRUE) |>
     head(n)
 }
+```
 
-# cluster 1 (security)
+```{r}
 get_top_words(km$centers, 1)
+```
 
-# cluster 2 (legislation / senate business)
+It looks like that first cluster contains words related to New Jersey-specific projects. Maybe we'll call this category "credit claiming".
+
+```{r}
 get_top_words(km$centers, 2)
+```
 
-# cluster 3 ("partisan taunting")
+The second cluster contains words related to security.
+
+```{r}
 get_top_words(km$centers, 3)
+```
 
+The third cluster has words related to various pieces of legislation and Senate business.
+
+```{r}
 # cluster 4 (credit claiming for New Jersey projects)
 get_top_words(km$centers, 4)
 ```
+
+And the final cluster looks like the "partisan taunting" category dicussed in the book.
+
+## Validation, Validation, Validation
+
+To validate our manually-assigned cluster labels, we want to go back to the text and check to see if they do a good job summarizing the documents. If not, we should modify our cluster labels or try a different value for $k$.
+
+```{r}
+cluster_assignments <- tibble(id = km$cluster |> 
+                                names() |> 
+                                as.numeric(),
+                              cluster = km$cluster)
+
+df <- df |>
+  left_join(cluster_assignments,
+            by = 'id')
+```
+
+If we pull a random document from Cluster 1, it should be related to New Jersey in some way.
+
+```{r}
+print_text <- function(text){
+  cat(str_wrap(text), sep = '\n')
+}
+
+df |>
+  filter(cluster == 1) |>
+  slice_sample(n = 1) |>
+  pull(text) |> 
+  print_text()
+```
+
+If we pull a random document from Cluster 2, it should be about security.
+
+```{r}
+df |>
+  filter(cluster == 2) |>
+  slice_sample(n = 1) |>
+  pull(text) |> 
+  print_text()
+```
+
+If we pull a random document from Cluster 3, it be about legislation and/or Senate business.
+
+```{r}
+df |>
+  filter(cluster == 3) |>
+  slice_sample(n = 1) |>
+  pull(text) |> 
+  print_text()
+```
+
+And a random document from Cluster 4 should contain some form of "partisan taunting".
+
+```{r}
+df |>
+  filter(cluster == 4) |>
+  slice_sample(n = 1) |>
+  pull(text) |> 
+  print_text()
+```
+
+## Clustering with Word Embeddings
+
+In that last clustering exercise, we represented each document as a vector of word counts. This can lead us astray when the documents are very short but our vocabulary is very large. For example, Senator Lautenberg has a number of press releases that I would classify as being about the environment, but the [Bag of Words](bag-of-words.html) has no idea that words like "preservation", "mercury", and "rivers" might belong in the same category. 
+
+When documents are as brief as these press releases, one could potentially represent them with the average [word embedding](word-embeddings.html) of the words in each document. The k-means clustering algorithm then works in the same way, except that it is assigning clusters within a vector space corresponding to the *meaning* of the documents (in a sense) rather than a vector space that's just counting up the frequency of words.
+
+Let's give it a try, shall we? First, get the word embeddings from the `textdata` package.
+
+```{r}
+library(textdata)
+
+# get the glove embedding vectors
+glove <- embedding_glove6b(dimensions = 100)
+
+# convert to a matrix (it will make the computation easier)
+glove_tokens <- glove$token
+
+glove <- glove |>
+  select(-token) |>
+  as.matrix()
+
+rownames(glove) <- glove_tokens
+
+glove[100:120,1:3]
+```
+
+Next, we'll tokenize the press releases, removing stop words and keeping only the words available in the GloVe lexicon.
+
+```{r}
+# get all the press releases and count up the words for each
+tidy_press_releases <- df |>
+  # get rid of the earlier cluster assignments
+  select(-cluster, -date) |>
+  mutate(text = str_replace_all(text,
+                                pattern = '     Senator Frank R  Lautenberg                                                                                                                      Press Release        of        Senator Lautenberg                                                                                ',
+                                replacement = '')) |>
+  # tokenize to the word level
+  unnest_tokens(input = 'text',
+                output = 'word') |>
+  # remove stop words
+  anti_join(get_stopwords()) |>
+  # remove numerals
+  filter(str_detect(word, '[0-9]', negate = TRUE)) |>
+  # remove the words that aren't in the glove lexicon
+  filter(word %in% glove_tokens)
+```
+
+
+TODO
+
+## Practice Problems
+
+1. Try changing the value of $k$ and see if the cluster assignments seem to improve. Look for cluster labels that are *exclusive* (topics aren't overlapping; words that are supposed to distinguish one cluster don't frequently appear in other clusters) and *cohesive* (it's easy to identify a unique topic for each cluster).
+
+## Further Reading
+
+TODO
+
+
