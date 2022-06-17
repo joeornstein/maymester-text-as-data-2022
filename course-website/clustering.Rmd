@@ -225,15 +225,84 @@ tidy_press_releases <- df |>
   filter(word %in% glove_tokens)
 ```
 
+Next, compute the average word embedding of each word in the document. I'm going to do it with a `for` loop, because I can't think of a more elegant solution.
 
-TODO
+```{r, cache = TRUE}
+# create an empty matrix called document embeddings
+document_embeddings <- matrix(nrow = nrow(df),
+                              ncol = 100)
+
+for(i in 1:nrow(df)){
+
+  list_of_words <- tidy_press_releases |>
+    filter(id == i) |>
+    pull(word)
+
+  document_embeddings[i,] <- colMeans(glove[list_of_words,])
+
+}
+
+glimpse(document_embeddings)
+```
+
+Now we have a matrix that represents each press release as a 100-dimensional vector. Using k-means, we will identify 6 clusters that best describe those document vectors.
+
+```{r}
+km <- kmeans(x = document_embeddings,
+             centers = 6,
+             nstart = 100)
+
+# merge the cluster assignments back with the documents
+cluster_assignments <- tibble(id = 1:558,
+                              cluster = km$cluster)
+
+df <- df |>
+  # remove the earlier cluster assignment from bag of words
+  select(-cluster) |>
+  left_join(cluster_assignments,
+            by = 'id')
+
+table(df$cluster)
+```
+
+You'll note, if you're playing along at home, that this line of code was *much* quicker than when we estimated k-means on the 7,073-dimensional bag of words vectors. Let's look at the most over-represented words in each cluster.
+
+```{r}
+
+# a function to get the most over-represented words by cluster
+get_top_words <- function(tidy_press_releases, cluster_of_interest){
+  tidy_press_releases |>
+    count(id, word) |>
+    left_join(cluster_assignments, by = 'id') |>
+    mutate(in_cluster = if_else(cluster == cluster_of_interest,
+                                'within_cluster', 'outside_cluster')) |>
+    # count the words in each cluster
+    group_by(in_cluster, word) |>
+    summarize(n = sum(n)) |>
+    pivot_wider(names_from = 'in_cluster',
+                values_from = 'n',
+                values_fill = 0) |>
+    # compute word shares
+    mutate(within_cluster = within_cluster / sum(within_cluster),
+           outside_cluster = outside_cluster / sum(outside_cluster)) |>
+    mutate(delta = within_cluster - outside_cluster) |>
+    arrange(-delta) |>
+    head(10) |>
+    pull(word)
+}
+
+get_top_words(tidy_press_releases, 1)
+get_top_words(tidy_press_releases, 2)
+get_top_words(tidy_press_releases, 3)
+get_top_words(tidy_press_releases, 4)
+get_top_words(tidy_press_releases, 5)
+get_top_words(tidy_press_releases, 6)
+```
+
+These seem like cohesive categories!
 
 ## Practice Problems
 
 1. Try changing the value of $k$ and see if the cluster assignments seem to improve. Look for cluster labels that are *exclusive* (topics aren't overlapping; words that are supposed to distinguish one cluster don't frequently appear in other clusters) and *cohesive* (it's easy to identify a unique topic for each cluster).
 
-## Further Reading
-
-TODO
-
-
+2. When we estimated k-means with document embeddings, the top words in one cluster included 'judge', 'court', and 'alito', which seems pretty cohesive. But they also included 'nfl' and 'iraq', which seem out-of-place. Investigate some of the documents included in this cluster. Is there something linking them together, or is this just a poor fit?
