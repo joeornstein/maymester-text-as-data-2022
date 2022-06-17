@@ -113,7 +113,6 @@ get_top_words(km$centers, 3)
 The third cluster has words related to various pieces of legislation and Senate business.
 
 ```{r}
-# cluster 4 (credit claiming for New Jersey projects)
 get_top_words(km$centers, 4)
 ```
 
@@ -299,7 +298,7 @@ get_top_words(tidy_press_releases, 5)
 get_top_words(tidy_press_releases, 6)
 ```
 
-These seem like cohesive categories!
+These seem like pretty cohesive categories! And now there's a cluster for press releases about the environment, consistent with my earlier hunch.
 
 ## Practice Problems
 
