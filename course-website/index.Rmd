@@ -23,7 +23,9 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## Overview
 
-This site is intended to serve as a companion to @grimmerTextDataNew2021, an excellent book on how to think about text as data, which makes a deliberate choice to omit code when describing their examples. (Wisely, in my view, as books with code can quickly become dated.) Thus the need for this `R` code supplement, which was developed during my Summer 2022 graduate-level Text As Data course at the University of Georgia. All the code and data necessary to replicate the results on this site are available at the GitHub link on the upper right.
+This site is intended to serve as a companion to @grimmerTextDataNew2021, an excellent book on how to think about text as data, which makes a deliberate choice to omit code when describing their examples.[^1] Thus the need for this `R` code supplement, which was developed during my Summer 2022 graduate-level Text As Data course at the University of Georgia. All the code and data necessary to replicate the results on this site are available at the GitHub link on the upper right.
+
+[^1]: Wisely, in my view, as books with code can quickly become dated.
 
 The site is divided into three sections, corresponding to the three stages of any text-as-data workflow:
 

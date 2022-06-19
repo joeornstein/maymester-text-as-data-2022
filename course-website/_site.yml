@@ -11,10 +11,10 @@ navbar:
       menu:
         - text: "Webscraping"
           href: webscraping.html
-        - text: "Optical Character Recognition"
-          href: OCR.html
         - text: "APIs"
           href: twitter-api.html
+        - text: "Optical Character Recognition"
+          href: OCR.html
     - text: "Tidy the Text"
       menu:
         - text: "Counting Words"

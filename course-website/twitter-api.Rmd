@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 In the [webscraping tutorial](webscraping.html), we harvested text directly from the HTML code of a webpage. This can be pretty laborious, so fortunately, there are some websites that provide an easier path to collecting their data, called an Application Programming Interface (API). To introduce ourselves to APIs, we'll pull text data from Twitter using the fantastic `rtweet` package.
 
-If you don't have a Twitter account, take a moment to [sign up](twitter.com).
+If you don't have a Twitter account, take a moment to [sign up](https://twitter.com/).
 
 ## Example Workflow
 

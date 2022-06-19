@@ -108,7 +108,7 @@ fed18_vector <- tidy_federalist |>
 fed18_vector
 ```
 
-Next we'll use the `dmultinom()` function to estimate the likelihood that `fed18_vector` would have been drawn from each of the authors' bags of words.
+Next we'll use the `dmultinom()` function to estimate the likelihood that the `fed18_vector` would have been drawn from each of the authors' bags of words.
 
 ```{r}
 dmultinom(x = fed18_vector,

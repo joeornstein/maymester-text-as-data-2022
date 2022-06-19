@@ -9,7 +9,7 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-We'd like not just to count the frequency of words, but also get a sense of what the words *mean*. In a [bag of words representation](bag-of-words.html), we treat the words "president" and "executive" as having completely unique meaning. By comparison, a word embeddings approach encodes the fact that these words have some overlapping meaning by placing them close together in a vector space.
+Often, we'd like to not only count the frequency of words, but also get a sense of what the words *mean*. In a [bag of words representation](bag-of-words.html), we treat words words like "president" and "executive" as separate indices in a word count vector, implicitly assuming that they have completely unique meanings. But the statistical models we use to understand text data will perform better if words with similar meaning have similar representations. That is the purpose of the word embeddings approach, which represents each word as a vector, encoding the fact that "president" and "executive" have some overlapping meaning by placing their vectors close together.
 
 ```{r, echo = FALSE}
 knitr::include_graphics('img/morpheus.jpg')
@@ -75,4 +75,4 @@ nearest_neighbors(tidy_glove, 'democracy')
 
 -   @grimmerTextDataNew2021, Chapter 8.
 
--    [Hvitfeldt & Silge](https://smltar.com/embeddings.html), Chapter 5.
+-   [Hvitfeldt & Silge](https://smltar.com/embeddings.html), Chapter 5.
