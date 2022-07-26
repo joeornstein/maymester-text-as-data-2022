@@ -7,9 +7,10 @@ bibliography: references.bib
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+set.seed(42)
 ```
 
-For unsupervised learning models like [k-means](clustering.html) and [LDA](LDA.html), the objective is often discovery. We have a set of unlabeled data, and we want to get a sense of how we might organize the documents, how we might sort them into buckets. But frequently social scientists turn to text data because we're interested in *measuring* some concept that is tough to quantify in other ways. For this, we'll want a different set of tools, particularly supervised learning methods, because we have an objective and we want to build a model that satisfies that objective.
+For unsupervised learning models like [k-means](clustering.html) and [LDA](LDA.html), the objective is often discovery. We have a set of unlabeled data, and we want to get a sense of how we might organize the documents -- how we might sort them into buckets. But frequently social scientists turn to text data because we're interested in *measuring* some concept that is tough to quantify in other ways. For this, we'll want a different set of tools, because we have an objective and we want to build a model that satisfies that objective.
 
 To illustrate the process of measurement using text data, let's consider the field of **sentiment analysis**. We have a set of documents, and we're interested in classifying the sentiment/emotion the author is trying to convey -- positive, negative, or neutral. Here is a dataset of 945 tweets about the Supreme Court that I compiled for a project with Jake Truscott and Elise Blasingame.
 
@@ -36,13 +37,100 @@ tweets |>
   kappam.fleiss()
 ```
 
+Manually labeling your documents has twin advantages of accuracy and transparency (when combined with a codebook describing why you coded things the way you did). But its main disadvantage is in scaling: it's difficult, costly, and/or time-consuming to hand-code more than a few thousand documents this way. If we want to work with a larger corpus, we need an automated method. As a first pass, let's consider dictionary classification.
+
 ## Dictionary Classification
 
-UNDER CONSTRUCTION (SEE NOTES)
+The dictionary method is pure bag of words. We count up the number of words with a positive sentiment and the number of words with a negative sentiment and take the difference. Tweets with more positive words than negative words are coded positive, and vice versa. 
 
-## Up Next: Supervised Learning
+To do so, we'll join the tokenized text data with a *sentiment lexicon*, a list of words paired with their associated sentiment. The `tidytext` package comes with four sentiment lexicons built in. 
 
-Both human-coding and dictionary classification are examples of *rule-based* measurement. You decide in advance exactly what steps you will take to measure each document, and then you (or your computer) follow the rules you set out. The problem with such rules-based measures is that they are either:
+```{r}
+get_sentiments('bing')
+
+get_sentiments('afinn')
+```
+
+Since it is the most extensive, we'll work with the *bing* lexicon in this tutorial.
+
+```{r}
+tidy_tweets <- tweets |> 
+  # tokenize to the word level
+  unnest_tokens(input = 'text',
+                output = 'word') |>
+  # join with the sentiment lexicon
+  inner_join(get_sentiments('bing'))
+
+tidy_tweets
+```
+
+Now we have a dataframe with `r nrow(tidy_tweets)` words from the tweets and their associated sentiment. We create a score for each document by counting the number of positive words minus the number of negative words, scaling by the total number of words matched to the sentiment lexicon.
+
+```{r}
+tidy_tweets <- tidy_tweets |> 
+  group_by(tweet_id) |> 
+  summarize(positive_words = sum(sentiment == 'positive'),
+            negative_words = sum(sentiment == 'negative'),
+            sentiment_score = (positive_words - negative_words) /
+              (positive_words + negative_words))
+
+ggplot(data = tidy_tweets,
+       mapping = aes(x = sentiment_score)) +
+  geom_histogram(color = 'black') +
+  theme_bw() +
+  labs(x = 'Dictionary Sentiment Score',
+       y = 'Number of Tweets')
+```
+
+Looking at the histogram of results, it seems like the dictionary classifier is labeling a *lot* of these tweets as positive. A lot more than our expert coders did. What's going on?
+
+```{r}
+# find a tweet the experts coded as negative
+# but the classifier coded as positive
+tweets |> 
+  left_join(tidy_tweets, by = 'tweet_id') |> 
+  filter(expert1 == -1, expert2 == -1, expert3 == -1,
+         sentiment_score == 1) |> 
+  pull(text) |> 
+  sample(3)
+```
+
+Ah. Well that's embarrassing. Seems the bing lexicon codes the words "trump" and "supreme" as positive.
+
+```{r}
+get_sentiments('bing') |> 
+  filter(word %in% c('trump','supreme'))
+```
+
+Perhaps this is an appropriate choice for the English language writ large, but for our specific corpus (tweets about Supreme Court cases during the Trump administration), it's definitely inappropriate. Let's see how the dictionary scores compare with the hand-coded scores.
+
+```{r}
+tweets <- tweets |> 
+  left_join(tidy_tweets, by = 'tweet_id') |> 
+  mutate(expert_score = (expert1 + expert2 + expert3) / 3) 
+
+ggplot(data = tweets,
+       mapping = aes(x = expert_score,
+                       y = sentiment_score)) +
+  geom_jitter(alpha = 0.5, width = 0.05) +
+  theme_bw() +
+  labs(x = 'Hand-Coded Sentiment', 
+       y = 'Dictionary Sentiment')
+```
+
+On the whole, it's pretty bad (correlation = `r round(cor(tweets$expert_score, tweets$sentiment_score, use = 'pairwise.complete.obs'), 3)`). When the tweets are genuinely positive, it seems that they contain a lot of positive words, so the dictionary method mostly gets it right. But when the tweets are negative, there may be a lot of sarcastic use of positive words, which trips up the classifier. For instance:
+
+```{r}
+tweets |> 
+  filter(str_detect(text, 'sober')) |> 
+  pull(text)
+```
+
+We want an approach that better predicts which words are most strongly associated with negative/positive sentiment in our particular corpus. For that we'll need...
+
+## Supervised Learning
+
+Both human coding and dictionary classification are examples of *rule-based* measurement. You decide in advance exactly what steps you will take to measure each document, and then you (or your computer) follow the rules you set out. The problem with such rules-based measures is that they are either:
 
 1.  Not scalable (e.g. human-coding). For a dataset of 945 tweets, we were able to tackle it in relatively short order. But if we were interested in 100,000 tweets? Or a million tweets? There's no way to scale that procedure, except with crowd coding on something like Amazon's MTurk [@benoit2016; @carlson2017], and that gets expensive quickly.
 2.  Scalable, but terrible (e.g. dictionary methods). With dictionary methods, it's trivial to classify a million tweets. But the results, as we have seen, are fairly crummy.
@@ -55,3 +143,6 @@ The best alternative to rules-based classification is *statistical* classificati
 2.  How accurate can you get the dictionary classifier to be, by varying the lexicon and modifying the word list to match our specific context (i.e. filtering out words whose dictionary meaning and context-specific meaning are different, like "Trump" and "Supreme")?
 
 ## Further Reading
+
+- [Silge & Robinson, Chapter 2](https://www.tidytextmining.com/sentiment.html)
+- Grimmer, Stewart & Roberts, Chapters 15-16
