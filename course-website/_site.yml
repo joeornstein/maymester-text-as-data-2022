@@ -32,6 +32,8 @@ navbar:
           href: LDA.html
         - text: "Sentiment Analysis"
           href: sentiment-analysis.html
+        - text: "Supervised Learning"
+          href: supervised-learning.html
   right:
     - text: "Home"
       href: index.html
