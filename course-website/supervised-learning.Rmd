@@ -1,0 +1,227 @@
+---
+title: "Supervised Learning"
+description: |
+  How to train a model that's good at predicting, but not...*too* good at predicting.
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+set.seed(42)
+```
+
+At the end of the page on [sentiment analysis](sentiment-analysis.html), we lamented that hand-coding is too costly to scale, and rules-based classifiers are too inflexible to handle the subtleties of human language. On this page, we'll demonstrate a different approach: take a corpus of pre-labeled documents, train a model to predict the labels, then use the predictions from that model to label other documents. This is called a **supervised learning** approach, and to illustrate, let's replicate the exercise from Chapter 23 of @grimmerTextDataNew2022, predicting whether a set of tweets during the 2016 presidential election were written by Donald Trump or his campaign staff.
+
+## The Data
+
+To start, let's load the training data compiled by [David Robinson](http://varianceexplained.org/r/trump-tweets/).
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(tidymodels)
+library(lubridate)
+
+load(url("http://varianceexplained.org/files/trump_tweets_df.rda"))
+
+glimpse(trump_tweets_df)
+```
+
+Throughout the 2016 presidential campaign, candidate Trump sent tweets from his personal Android phone, while staffers ghost-wrote tweets from an iPhone or web client. This provides us with the labels we need to build our model.
+
+```{r}
+tweets <- trump_tweets_df |>
+  select(.id = id,
+         .source = statusSource,
+         .text = text,
+         .created = created) |>
+  extract(.source, '.source', "Twitter for (.*?)<") |>
+  filter(.source %in% c('iPhone', 'Android')) |>
+  mutate(.source = factor(.source))
+
+# (notice that I'm putting a dot in front of all these
+# column names, on the off chance that words like "source"
+# or "id" appear in the corpus after we tokenize)
+
+tweets |>
+  count(.source, hour = hour(with_tz(.created, "EST"))) |>
+  mutate(percent = n / sum(n)) |>
+  ggplot(aes(hour, percent, color = .source)) +
+  geom_line() +
+  scale_y_continuous(labels = percent_format()) +
+  labs(x = "Hour of day (EST)",
+       y = "% of tweets",
+       color = "") +
+  theme_minimal()
+```
+
+Trump is a very productive tweeter in the early morning and late evening. Next, let's tokenize the tweets and convert into a document-term matrix. We'll remove any stray HTML and rare words that only get used once or twice in the training set.
+
+```{r}
+# pick the words to keep as predictors
+words_to_keep <- tweets |>
+  unnest_tokens(input = '.text',
+                output = 'word') |>
+  count(word) |>
+  # remove numerals, URLs
+  filter(str_detect(word, '.co|.com|.net|.edu|.gov|http', negate = TRUE)) |>
+  filter(str_detect(word, '[0-9]', negate = TRUE)) |>
+  # remove rare words
+  filter(n > 2) |>
+  pull(word)
+
+# tokenize
+tidy_tweets <- tweets |>
+  unnest_tokens(input = '.text',
+                output = 'word') |>
+  filter(word %in% words_to_keep) |>
+  count(.id, word) |>
+  # compute term frequencies
+  bind_tf_idf(term = 'word',
+              document = '.id',
+              n = 'n') |>
+  select(.id, word, tf) |>
+  # pivot wider into a document-term matrix
+  pivot_wider(id_cols = '.id',
+              names_from = 'word',
+              values_from = 'tf',
+              values_fill = 0)
+
+# join with the training labels
+tidy_tweets <- tweets |>
+  select(.id, .source, .created) |>
+  right_join(tidy_tweets, by = '.id')
+
+dim(tidy_tweets)
+tidy_tweets[1:6, 1:5]
+```
+
+## Underfitting and Overfitting
+
+All supervised learning, in a nutshell, is an effort to find the sweet spot between a model that is too simple (underfitting) and one that is too complex (overfitting). With `r nrow(tidy_tweets)` documents and `r ncol(tidy_tweets) - 3` possible predictors, there are an enormous number of possible models that we could fit.
+
+To discipline ourselves, it is good practice to split the dataset into two parts: the training set, which we use to fit the model, and the test set, which we use to evaluate the predictions and see whether we did a good job.
+
+```{r}
+tweet_split <- initial_split(tidy_tweets,
+                             prop = 0.8)
+
+train <- training(tweet_split)
+test <- testing(tweet_split)
+```
+
+For our first stab at a model, consider what we remember about Trump's tweeting style. Words and phrases that were distinctly Trump 2016, like "crooked", "drain the swamp", or "loser" might help predict whether it was him or a staffer doing the tweeting. Let's fit a logistic regression including some of those keywords as predictors.
+
+```{r}
+model1 <- logistic_reg() |>
+  fit(formula = .source ~ crooked + dumb + emails +
+        crowds + hillary + winning + weak,
+      data = train)
+
+tidy(model1)
+```
+
+This is a good start. Many of the words we chose are statistically significant predictors. But...
+
+```{r}
+# out-of-sample fit
+test |>
+  bind_cols(predict(model1, test)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+test |>
+  bind_cols(predict(model1, test)) |>
+  conf_mat(truth = .source, estimate = .pred_class) |>
+  autoplot(type = 'heatmap')
+```
+
+The model does a terrible job at out-of-sample prediction. Without a lot of information to go on (most of the tweets don't contain one of those seven words) it predicts that every tweet but one was written by Trump. This is the hallmark of an *underfit* model: it doesn't do any better than a null model that just predicts the most common class for every document.
+
+What if we tried the opposite strategy, throwing *every* word into the model as a predictor? Would that perform better?
+
+```{r}
+# overfit
+model2 <- logistic_reg() |>
+  fit(formula = .source ~ .,
+      data = train |>
+        select(-.id, -.created))
+
+tidy(model2)
+
+# in-sample fit
+train |>
+  bind_cols(predict(model2, train)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+```
+
+Clearly, this `r nrow(tidy(model2))` parameter model does a great job predicting the training set. But how is the prediction accuracy on the held-out test set?
+
+```{r}
+# out-of-sample fit
+test |>
+  bind_cols(predict(model2, test)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+test |>
+  bind_cols(predict(model2, test)) |>
+  conf_mat(truth = .source, estimate = .pred_class) |>
+  autoplot(type = 'heatmap')
+```
+
+This is a hallmark of overfitting. The model is so complex that it is mistaking noise for signal, incorporating every random word that gets written by Trump of a staffer as a parameter estimate. For example, in the training set, there are `r train |> filter(another > 0) |> nrow()` tweets that use the word "another", `r train |> filter(another > 0, .source == 'Android') |> nrow()` by Trump and the rest by staffers. The overfit model takes this as evidence that "another" is a Trumpy word. But that's just a weird eccentricity of the training set; in the test set "another" is used more often by staffers. As a result, the overfit model actually performs *worse* out-of-sample than the underfit model.
+
+While we want the model to do a good job minimizing prediction error in the training data, we also want to impose some constraint on how many words it can assign nonzero coefficients to. This is a job for regularization.
+
+## Regularization: Hitting the Sweet Spot
+
+One way to impose a complexity constraint on our logistic regression model is with the [LASSO](https://en.wikipedia.org/wiki/Lasso_(statistics)). This approach estimates a set of coefficients that maximizes the likelihood of the data, subject to the constraint that $\sum |\beta| < \frac{1}{\lambda}$. In other words, the sum total of the model's coefficients can't stray too far from zero. Let's set that penalty term to 0.01 and see how we do.
+
+```{r}
+# fit a regularized model (LASSO)
+model3 <- logistic_reg(penalty = 0.01, mixture = 1) |>
+  set_engine('glmnet') |>
+  fit(formula = .source ~ .,
+      data = train |>
+        select(-.id, -.created))
+
+tidy(model3)
+
+# in-sample fit
+train |>
+  bind_cols(predict(model3, train)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+# out-of-sample fit
+test |>
+  bind_cols(predict(model3, test)) |>
+  accuracy(truth = .source, estimate = .pred_class)
+
+test |>
+  bind_cols(predict(model3, test)) |>
+  conf_mat(truth = .source, estimate = .pred_class) |>
+  autoplot(type = 'heatmap')
+```
+
+Regularization is *powerful* stuff. Not only does the regularized model perform much better out-of-sample than the first two models, but it gives us a set of `r model3 |> tidy() |> filter(estimate != 0) |> nrow()` nonzero coefficients that we can interpret as the most strongly predictive words for whether a tweet was written by Trump or not.
+
+```{r, fig.height = 45, out.height=2500}
+tidy(model3) |> 
+  filter(estimate != 0) |> 
+  ggplot(mapping = aes(x = estimate,
+                       y = fct_reorder(term, estimate))) + 
+  geom_col() +
+  labs(x = 'Most Trumpy < - > Most Staffer-Speak',
+       y = 'Term')
+```
+
+## Practice Problems
+
+1.  Play around with the penalty hyperparameter until you find a better value for than 0.01. See the file `code/08_supervised-learning/predicting-trump-tweets-chap23.R` in the code repository for instructions more on tuning models through cross-validation with the `tidymodels` package.
+
+2.  Fit a regularized logistic regression to predict whether the unattributed Federalist Papers were written by Hamilton or Madison, using the stop words document-term matrix we [created earlier](federalist-paper.html).
+
+## Further Reading
+
+-   David Robinson's [original post](http://varianceexplained.org/r/trump-tweets/).
+-   Hvitfeldt & Silge (2022), particularly [Chapter 7](https://smltar.com/mlclassification.html)
+-   Grimmer, Stewart & Roberts, Chapters 17-19

@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 set.seed(42)
 ```
 
-For unsupervised learning models like [k-means](clustering.html) and [LDA](LDA.html), the objective is often discovery. We have a set of unlabeled data, and we want to get a sense of how we might organize the documents -- how we might sort them into buckets. But frequently social scientists turn to text data because we're interested in *measuring* some concept that is tough to quantify in other ways. For this, we'll want a different set of tools, because we have an objective and we want to build a model that satisfies that objective.
+For unsupervised learning models like [k-means](clustering.html) and [LDA](LDA.html), the objective is often discovery. We have a set of unlabeled data, and we want to get a sense of how we might organize the documents -- how we might sort them into buckets. But frequently social scientists turn to text data because we're interested in *measuring* some concept that is tough to quantify in other ways. For this, we'll want a different set of tools.
 
 To illustrate the process of measurement using text data, let's consider the field of **sentiment analysis**. We have a set of documents, and we're interested in classifying the sentiment/emotion the author is trying to convey -- positive, negative, or neutral. Here is a dataset of 945 tweets about the Supreme Court that I compiled for a project with Jake Truscott and Elise Blasingame.
 
@@ -133,9 +133,9 @@ We want an approach that better predicts which words are most strongly associate
 Both human coding and dictionary classification are examples of *rule-based* measurement. You decide in advance exactly what steps you will take to measure each document, and then you (or your computer) follow the rules you set out. The problem with such rules-based measures is that they are either:
 
 1.  Not scalable (e.g. human-coding). For a dataset of 945 tweets, we were able to tackle it in relatively short order. But if we were interested in 100,000 tweets? Or a million tweets? There's no way to scale that procedure, except with crowd coding on something like Amazon's MTurk [@benoit2016; @carlson2017], and that gets expensive quickly.
-2.  Scalable, but terrible (e.g. dictionary methods). With dictionary methods, it's trivial to classify a million tweets. But the results, as we have seen, are fairly crummy.
+2.  Scalable, but terrible (e.g. dictionary methods). With rules-based classification, it's trivial to classify a million tweets. But the results, as we have seen, are often crummy.
 
-The best alternative to rules-based classification is *statistical* classification, and that is the topic of the [next page](supervised-learning.html).
+The best alternative to rules-based classification is *statistical* classification, and that is the topic of the page on [supervised learning](supervised-learning.html).
 
 ## Practice Problems
 
