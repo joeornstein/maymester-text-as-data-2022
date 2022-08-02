@@ -18,7 +18,7 @@ In Chapter 5, @grimmerTextDataNew2021 present their "standard recipe" for repres
 3. Reduce complexity
 4. Create a document-feature matrix
 
-Let's demonstrate this workflow using the State of the Union speeches application from Chapter 5. Our objective is to describe what words presidents when discussing the topic of manufacturing.
+Let's demonstrate this workflow using the State of the Union speeches application from Chapter 5. Our objective is to describe what words presidents use when discussing the topic of manufacturing.
 
 ## Step 1: Choose a Unit of Analysis
 
