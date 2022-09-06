@@ -9,7 +9,7 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-Whenever we analyze a text as data, the first step after digitizing is to decide how we're gonig to represent the text quantitatively. The most straightforward such representation is the so-called "bag of words". We ignore word order, syntax, punctuation, meaning, and context, focusing only on the frequency with which words appear in the text. Though this representation throws out a lot of detail, it can nevertheless be useful, depending on what you're trying to accomplish.
+Whenever we analyze a text as data, the first step after digitizing is to decide how we're going to represent the text quantitatively. The most straightforward such representation is the so-called "bag of words". We ignore word order, syntax, punctuation, meaning, and context, focusing only on the frequency with which words appear in the text. Though this representation throws out a lot of detail, it can nevertheless be useful, depending on what you're trying to accomplish.
 
 In Chapter 5, @grimmerTextDataNew2021 present their "standard recipe" for representing a text corpus as a bag of words:
 
