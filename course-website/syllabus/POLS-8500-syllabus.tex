@@ -78,7 +78,7 @@ morekeywords={__global__, __device__},  % CUDA specific keywords
 \rule{6.5in}{0.4pt}
 \begin{minipage}[t]{.96\textwidth}
 \begin{tabular}{llcccll}
-\textbf{Professor:} & Joe Ornstein & & &  & \textbf{Time:} & MTWThF 11:00am -- 1:45pm \\
+\textbf{Professor:} & Joe Ornstein & & &  & \textbf{Time:} & MTWThF 1:00pm -- 3:45pm \\
 \textbf{Email:} &  \href{mailto:jornstein@uga.edu}{jornstein@uga.edu} & & & & \textbf{Place:} & 101D Baldwin Hall\\
 \textbf{Website:} & \href{https://joeornstein.github.io/text-as-data/}{joeornstein.github.io/text-as-data/} & & & & &
 \end{tabular}
@@ -150,12 +150,11 @@ Please read and markup these readings before class each day.
 
 \begin{itemize}
 	\item GSR Chapters 1-2
-	\item \href{https://joeornstein.github.io/pols-3230/week-11.html#getting-twitter-data}{Instructions to sign up for the Twitter API}
 \end{itemize}
 
 \subsection*{Day 2: Creating a Corpus}
 
-\textit{Where and how do we get text data? Playtime with Twitter.}
+\textit{Where and how do we get text data?}
 
 \begin{itemize}
 	\item GSR Chapters 3-4
@@ -189,18 +188,18 @@ Please read and markup these readings before class each day.
 \end{itemize}
 
 
-\subsection*{Day 6: Text Reuse}
+%\subsection*{Day 6: Text Reuse}
+%
+%\textit{Let's take a model developed to detect plagiarism and use it to see how ideas spread in political texts over time.}
+%
+%\begin{itemize}
+%	\item GSR Chapter 9.1
+%	\item Wilkerson, John, David Smith, and Nicholas Stramp. 2015. ``Tracing the Flow of Policy Ideas in Legislatures: A Text Reuse Approach.'' \textit{American Journal of Political Science} 59(4): 943–56.
+%	\item Jansa, Joshua M., Eric R. Hansen, and Virginia H. Gray. 2019. ``Copy and Paste Lawmaking: Legislative Professionalism and Policy Reinvention in the States.'' \textit{American Politics Research} 47(4): 739–67.
+%\end{itemize}
 
-\textit{Let's take a model developed to detect plagiarism and use it to see how ideas spread in political texts over time.}
 
-\begin{itemize}
-	\item GSR Chapter 9.1
-	\item Wilkerson, John, David Smith, and Nicholas Stramp. 2015. ``Tracing the Flow of Policy Ideas in Legislatures: A Text Reuse Approach.'' \textit{American Journal of Political Science} 59(4): 943–56.
-	\item Jansa, Joshua M., Eric R. Hansen, and Virginia H. Gray. 2019. ``Copy and Paste Lawmaking: Legislative Professionalism and Policy Reinvention in the States.'' \textit{American Politics Research} 47(4): 739–67.
-\end{itemize}
-
-
-\subsection*{Day 7: Clustering}
+\subsection*{Day 6: Clustering}
 
 \textit{What if we don't know in advance how we want to measure our concept? Can we just let the computer tell us how to categorize our text data?}
 
@@ -211,7 +210,7 @@ Please read and markup these readings before class each day.
 
 
 
-\subsection*{Day 8: Topic Models}
+\subsection*{Day 7: Topic Models}
 
 \textit{Latent Dirichlet Allocation (LDA): Not Quite As Frightening As That Name Makes It Seem}
 
@@ -220,7 +219,7 @@ Please read and markup these readings before class each day.
 	\item \href{https://www.tidytextmining.com/topicmodeling.html}{SR Chapter 6}
 \end{itemize}
 
-\subsection*{Day 9: Measurement}
+\subsection*{Day 8: Measurement}
 
 \textit{How do you know if you've done a good job measuring something?}
 
@@ -229,7 +228,7 @@ Please read and markup these readings before class each day.
 \end{itemize}
 
 
-\subsection*{Day 10: Word Counting}
+\subsection*{Day 9: Word Counting}
 
 \textit{Dictionary methods and sentiment analysis. What if we just counted up the different kinds of words in a document? Would that be a good measure?}
 
@@ -238,7 +237,7 @@ Please read and markup these readings before class each day.
 	\item \href{https://www.tidytextmining.com/sentiment.html}{SR Chapter 2}
 \end{itemize}
 
-\subsection*{Day 11: Supervised Learning, Part 1}
+\subsection*{Day 10: Supervised Learning, Part 1}
 
 \textit{Step 1: Measure a bunch of documents by hand. Step 2: Get tired of doing it all by hand. Step 3: Ask the computer to predict how it would measure the rest of the documents if it were you. Step 4: Profit.}
 
@@ -248,7 +247,7 @@ Please read and markup these readings before class each day.
 
 
 
-\subsection*{Day 12: Crowd-Coding}
+\subsection*{Day 11: Crowd-Coding}
 
 \textit{What if we let other people do the hand-coding? MTurk, SentimentIt}
 
@@ -258,7 +257,7 @@ Please read and markup these readings before class each day.
 	
 \end{itemize}
 
-\subsection*{Day 13: Supervised Learning, Part 2}
+\subsection*{Day 12: Supervised Learning, Part 2}
 
 \textit{Naive Bayes, Regularization, Ensembles}
 
@@ -266,15 +265,16 @@ Please read and markup these readings before class each day.
 	\item GSR Chapter 19
 \end{itemize}
 
-\subsection*{Day 14: Foundation Models}
+\subsection*{Day 13-14: Large Language Models}
 
 \textit{Here we bring it all together. Take a massive semi-supervised neural network, train it on the entire Internet, and see what happens.}
 
 \begin{itemize}
 	\item GSR Section 8.5
-	\item Ornstein, Blasingame, and Truscott (2022). ``How To Train Your Stochastic Parrot.'' \textit{Working Paper}.
-	\item Alexander, Scott. 2019. \href{https://slatestarcodex.com/2019/02/19/gpt-2-as-step-toward-general-intelligence/}{``GPT-2 As Step Toward General Intelligence.''} \textit{Slate Star Codex}.
-	\item Alexander, Scott. 2020. \href{https://slatestarcodex.com/2020/06/10/the-obligatory-gpt-3-post/}{``The Obligatory GPT-3 Post.''} \textit{Slate Star Codex.}
+	\item Ornstein, Blasingame, and Truscott (2023). \href{https://joeornstein.github.io/publications/ornstein-blasingame-truscott.pdf}{``How To Train Your Stochastic Parrot: Large Language Models for Political Texts.''} \textit{Working Paper}.
+	\item Alammar, Jay (2018). \href{https://jalammar.github.io/illustrated-transformer/}{The Illustrated Transformer} (optional, for a deeper dive into how large language models work).
+%	\item Alexander, Scott. 2019. \href{https://slatestarcodex.com/2019/02/19/gpt-2-as-step-toward-general-intelligence/}{``GPT-2 As Step Toward General Intelligence.''} \textit{Slate Star Codex}.
+%	\item Alexander, Scott. 2020. \href{https://slatestarcodex.com/2020/06/10/the-obligatory-gpt-3-post/}{``The Obligatory GPT-3 Post.''} \textit{Slate Star Codex.}
 		
 \end{itemize}
 
