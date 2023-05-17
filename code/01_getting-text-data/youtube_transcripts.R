@@ -53,13 +53,14 @@ nchar(transcript)
 
 
 # why not make it a function?
-get_youtube_transcript <- function(video_id){
+get_youtube_transcript <- function(video_id, lang = 'en'){
 
   # 1. create an object from the python package
   youtubecaption <- reticulate::import('youtube_transcript_api')
 
   # 2. get the transcript from the video you want
-  d <- youtubecaption$YouTubeTranscriptApi$get_transcript(video_id)
+  d <- youtubecaption$YouTubeTranscriptApi$get_transcript(video_id,
+                                                          languages = c(lang, 'en'))
 
 
   # 3. paste together the transcript snippets
@@ -72,12 +73,16 @@ get_youtube_transcript <- function(video_id){
 }
 
 
-  transcript <- get_youtube_transcript('mLyOj_QD4a4')
+transcript <- get_youtube_transcript('mLyOj_QD4a4')
 transcript
 
-# japanese character support????
-# transcript <- get_youtube_transcript('E3w1AdTm6nc')
+# multi-language support
+transcript <- get_youtube_transcript('E3w1AdTm6nc', lang = 'ja')
+transcript
 
+# chinese language support??
+transcript <- get_youtube_transcript('S2-8S6O9W54', lang = 'zh-Hant')
+transcript
 
 # if I have multiple video ids, and want the transcripts for all of them, let's try a loop:
 video_ids <- c('mLyOj_QD4a4', '5417se8E04E')
