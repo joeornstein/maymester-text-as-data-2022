@@ -8,6 +8,11 @@
 # install.packages('reticulate')
 # reticulate::install_miniconda()
 # reticulate::py_install('youtube-transcript-api')
+# IF YOU ARE A MAC USER, YOU MAY NEED THE FOLLOWING SETUP STEPS AS WELL
+# reticulate::conda_create('myenv')
+# THEN RESTART R
+# reticulate::use_condaenv('myenv')
+# reticulate::py_install('youtube-transcript-api')
 # ---
 
 # now we can do it in three steps
@@ -52,7 +57,7 @@ transcript
 nchar(transcript)
 
 
-# why not make it a function?
+# why not make it a function? then we can easily rerun that set of steps for any video id we choose
 get_youtube_transcript <- function(video_id, lang = 'en'){
 
   # 1. create an object from the python package
