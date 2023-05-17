@@ -16,10 +16,30 @@
 youtubecaption <- reticulate::import('youtube_transcript_api')
 
 # 2. get the transcript from the video you want
-d <- youtubecaption$YouTubeTranscriptApi$get_transcript('SQRqvfqpPe4')
+d <- youtubecaption$YouTubeTranscriptApi$get_transcript('5417se8E04E')
 
 # notice that this comes to us as a giant list with timestamps.
 # If we just want the entire transcript we can loop it and paste it together
+
+# loop basics:
+for(i in 1:10){
+  print(i)
+}
+
+for(i in c('hamburger', 'pasta', 'pizza')){
+  print(i)
+}
+
+for(food in c('hamburger', 'pasta', 'pizza')){
+  print(food)
+}
+
+for(i in 1:10){
+  print(d[[i]]$text)
+}
+
+
+
 
 # 3. paste together the transcript snippets
 transcript <- ''
@@ -28,6 +48,8 @@ for(i in 1:length(d)){
 }
 transcript
 
+# how many characters in that five hour long meeting?
+nchar(transcript)
 
 
 # why not make it a function?
@@ -49,5 +71,24 @@ get_youtube_transcript <- function(video_id){
   return(transcript)
 }
 
-get_youtube_transcript('yHRMcwQHicI')
+
+  transcript <- get_youtube_transcript('mLyOj_QD4a4')
+transcript
+
+# japanese character support????
+# transcript <- get_youtube_transcript('E3w1AdTm6nc')
+
+
+# if I have multiple video ids, and want the transcripts for all of them, let's try a loop:
+video_ids <- c('mLyOj_QD4a4', '5417se8E04E')
+
+library(tidyverse)
+# we can use the 'map_chr()' function to run that function multiple times and return a list
+# of character objects.
+# first input is the list we want to iterate over,
+# and the second input is the function we want to run
+transcripts <- map_chr(video_ids, get_youtube_transcript)
+
+# you could also do this same thing with a for loop,
+# but it would be more tedious
 
