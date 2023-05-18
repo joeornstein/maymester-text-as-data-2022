@@ -1,0 +1,158 @@
+---
+title: "Webscrape the BBC"
+format: pdf
+editor: visual
+
+message: false
+warning: false
+---
+
+## Load Packages
+
+```{r}
+library(tidyverse)
+library(rvest)
+```
+
+## Scrape the Page
+
+```{r}
+# Three steps to scrape a webpage:
+# 1. Read html from site/page
+page <- read_html('https://www.bbc.com/news/world-middle-east-64062900')
+# 2. Get the elements on that page that you want
+paragraphs <- html_elements(page, 'p')
+# 3. From html elements convert into text
+text <- html_text2(paragraphs)
+cat(text)
+
+```
+
+## Print that text (tidily)
+
+```{r}
+text # this should overflow
+
+# three steps to a solution here.
+# we need to first loop through each text element,
+# then within each text element, insert a \n (carriage return) every 90? characters
+# then call cat(text) to output
+
+# GOOD NEWS! IT'S A "NESTED LOOP" (a loop within a loop)
+for(i in 1:length(text)){
+  
+  for(j in 1:length(text[i])){
+    
+    if(j %% 90 == 0){
+      
+      # every 90th character, paste in a carriage return
+      text[i][j] <- paste0(text[i][j], '\n')
+      
+    }
+    
+  }
+}
+
+cat(text)
+```
+
+## Once we have the text, let's tidy it and count up the words
+
+```{r}
+# first, let's paste all the paragraphs together
+text <- paste(text, collapse = ' ')
+
+# next, let's *tokenize* the text, splitting it up into unigrams (words)
+library(tidyverse)
+library(tidytext)
+
+# second, put the text into a dataframe
+d <- tibble(text)
+
+# then, use the unnest_tokens() function from tidytext to tokenize
+# this function takes three inputs
+# 1: the dataframe with the text you want to tokenize
+# 2: the name of the column with the text data
+# 3: the name you want to call the tokenized text column
+d <- unnest_tokens(d, input = 'text', output = 'word')
+
+
+
+```
+
+## Some preliminary text analysis
+
+```{r}
+# frequency distribution of all words
+d |> 
+  count(word) |> 
+  arrange(-n)
+
+# frequency distribution of words, removing stop words like "the" and "of"
+d |> 
+  anti_join(get_stopwords(language = 'en', source = 'smart')) |> 
+  count(word) |> 
+  arrange(-n)
+
+
+```
+
+## Visualizing Frequency Distributions
+
+We can visualize that frequency distribution in a number of ways.
+
+```{r}
+# bar chart of the 30 most common words
+d |> 
+  anti_join(get_stopwords(language = 'en', source = 'smart')) |> 
+  count(word) |> 
+  arrange(-n) |> 
+  # just keep the first 30 rows (30 most common words)
+  slice_head(n = 30) |> 
+  # reorder the word variable as a factor, in order of word frequency
+  mutate(word = fct_reorder(word, n)) |> 
+  ggplot(mapping = aes(x=n, y=word)) +
+  geom_col()
+
+# word clouds are also cool
+library(wordcloud2)
+d |> 
+  anti_join(get_stopwords(language = 'en', source = 'smart')) |> 
+  count(word) |> 
+  arrange(-n) |> 
+  wordcloud2()
+
+
+```
+
+## Sentiment Analysis
+
+If I want to know if this article is happy or sad, one approach is to count up the number of happy words vs the number of sad words. (Positive vs. negative sentiment).
+
+```{r}
+
+# take our tokenized dataset and merge it with the sentiment lexicon
+d |> 
+  # only keep words from the BBC article if they appear in the sentiment lexicon
+  inner_join(get_sentiments(lexicon = 'bing'))
+
+# take our tokenized dataset and merge it with the sentiment lexicon
+d |> 
+  # only keep words from the BBC article if they appear in the sentiment lexicon
+  inner_join(get_sentiments(lexicon = 'bing')) |> 
+  # count up positive and negative sentiment words
+  count(sentiment)
+
+# suppose we wanted to remove words that were only used once
+d |> 
+    # only keep words from the BBC article if they appear in the sentiment lexicon
+    inner_join(get_sentiments(lexicon = 'bing')) |> 
+  # count how many times each word appears
+  count(word, sentiment) |> 
+  # remove the words used only once
+  filter(n > 1) |> 
+  # for each sentiment classification, count up the number of words
+  group_by(sentiment) |> 
+  summarize(num = sum(n))
+
+```
