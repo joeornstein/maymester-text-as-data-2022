@@ -24,45 +24,30 @@ page <- read_html('https://www.bbc.com/news/world-middle-east-64062900')
 paragraphs <- html_elements(page, 'p')
 # 3. From html elements convert into text
 text <- html_text2(paragraphs)
-cat(text)
-
 ```
 
 ## Print that text (tidily)
 
+This text should overflow across the PDF margins. Not pretty.
+
 ```{r}
-text # this should overflow
+# let's paste all the paragraphs together
+text <- paste(text, collapse = ' ')
+text
+```
 
-# three steps to a solution here.
-# we need to first loop through each text element,
-# then within each text element, insert a \n (carriage return) every 90? characters
-# then call cat(text) to output
+We can solve this with the `str_wrap()` function from `tidyverse` , which inserts carriage returns ('\\n') to convert the text into paragraphs, and the `cat()` function, which prints the text.
 
-# GOOD NEWS! IT'S A "NESTED LOOP" (a loop within a loop)
-for(i in 1:length(text)){
-  
-  for(j in 1:length(text[i])){
-    
-    if(j %% 90 == 0){
-      
-      # every 90th character, paste in a carriage return
-      text[i][j] <- paste0(text[i][j], '\n')
-      
-    }
-    
-  }
-}
-
-cat(text)
+```{r}
+text |> 
+  str_wrap() |> 
+  cat()
 ```
 
 ## Once we have the text, let's tidy it and count up the words
 
 ```{r}
-# first, let's paste all the paragraphs together
-text <- paste(text, collapse = ' ')
-
-# next, let's *tokenize* the text, splitting it up into unigrams (words)
+# first, let's *tokenize* the text, splitting it up into unigrams (words)
 library(tidyverse)
 library(tidytext)
 
@@ -113,16 +98,18 @@ d |>
   mutate(word = fct_reorder(word, n)) |> 
   ggplot(mapping = aes(x=n, y=word)) +
   geom_col()
+```
 
-# word clouds are also cool
+```{r}
+#| eval: false
+
+# word clouds are also cool (but won't render to pdf)
 library(wordcloud2)
 d |> 
   anti_join(get_stopwords(language = 'en', source = 'smart')) |> 
   count(word) |> 
   arrange(-n) |> 
   wordcloud2()
-
-
 ```
 
 ## Sentiment Analysis
@@ -142,17 +129,5 @@ d |>
   inner_join(get_sentiments(lexicon = 'bing')) |> 
   # count up positive and negative sentiment words
   count(sentiment)
-
-# suppose we wanted to remove words that were only used once
-d |> 
-    # only keep words from the BBC article if they appear in the sentiment lexicon
-    inner_join(get_sentiments(lexicon = 'bing')) |> 
-  # count how many times each word appears
-  count(word, sentiment) |> 
-  # remove the words used only once
-  filter(n > 1) |> 
-  # for each sentiment classification, count up the number of words
-  group_by(sentiment) |> 
-  summarize(num = sum(n))
 
 ```
