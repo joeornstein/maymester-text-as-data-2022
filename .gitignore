@@ -51,3 +51,6 @@ model-fits/
 
 # for reasons I don't quite understand this one keeps popping up
 SOJ_3.png
+
+# API keys
+congress-api-key.txt
