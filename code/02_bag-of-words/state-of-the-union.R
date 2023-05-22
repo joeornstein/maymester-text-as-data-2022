@@ -55,8 +55,29 @@ sotu_words <- sotu_words |>
 library(wordcloud2)
 
 sotu_words |>
+  filter(word_stem != 'manufactur') |>
   count(word_stem) |>
   wordcloud2()
+
+sotu_words |>
+  count(word_stem) |>
+  arrange(-n)
+
+
+# compare the 19th century with the 20th century
+sotu_words |>
+  filter(word_stem != 'manufactur') |>
+  group_by(year < 1900) |>
+  count(word_stem) |>
+  arrange(-n) |>
+  # keep just the top 25 words from each era
+  slice_max(n, n = 25) |>
+  # reorder the word_stem variable by frequency so it looks pretty on a chart
+  mutate(word_stem = fct_reorder(word_stem, n)) |>
+  # plot it
+  ggplot(mapping = aes(y = word_stem, x = n)) +
+  geom_col() +
+  facet_wrap(~ `year < 1900`, scales = 'free_y')
 
 
 
