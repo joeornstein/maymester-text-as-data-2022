@@ -7,11 +7,33 @@
 
 library(tidyverse)
 library(tidytext)
-library(corpus)
+library(rvest)
 
-## Load the data ----------------------
+## Scrape the data from Project Gutenberg ----------------------
 
-d <- federalist
+# read the raw HTML
+page <- read_html('https://www.gutenberg.org/cache/epub/18/pg18-images.html')
+
+# get all the "paragraphs"
+paragraphs <- html_elements(page, '.chapter')
+
+# get just the text from the element we want
+text <- html_text2(paragraphs)
+
+d <- tibble(text)
+
+# get rid of the slightly different version of Federalist 70
+d <- d |>
+  filter(str_detect(text, 'slightly different version', negate = TRUE))
+
+# create a column for the title and attributed author
+d <- d |>
+  mutate(author = text |>
+           str_extract('HAMILTON AND MADISON|HAMILTON OR MADISON|HAMILTON|MADISON|JAY') |>
+           str_to_title(),
+         title = str_extract(text, 'No. [A-Z].*'))
+
+## Tidy and tokenize the data ----------------
 
 tidy_federalist <- d |>
   # remove the salutation
