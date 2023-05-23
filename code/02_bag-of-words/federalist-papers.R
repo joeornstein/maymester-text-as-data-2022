@@ -14,7 +14,7 @@ library(rvest)
 # read the raw HTML
 page <- read_html('https://www.gutenberg.org/cache/epub/18/pg18-images.html')
 
-# get all the "paragraphs"
+# get all the chapters
 paragraphs <- html_elements(page, '.chapter')
 
 # get just the text from the element we want
@@ -43,6 +43,52 @@ tidy_federalist <- d |>
   # tokenize to words
   unnest_tokens(input = 'text',
                 output = 'word')
+
+
+## first pass: three words we think might be distinctive of these authors' style -------
+
+interesting_stopwords <- c('be', 'that', 'would')
+
+# create the "bag of words"
+bag_of_words <- tidy_federalist |>
+  # just keep the stop words that we want to track
+  filter(word %in% interesting_stopwords) |>
+  # count up the number of times that each author uses each word
+  count(author, word)
+
+# create vectors for each author
+hamilton_vector <- bag_of_words |>
+  filter(author == 'Hamilton') |>
+  pull(n) |>
+  # make it pretty by giving each element a name
+  set_names(interesting_stopwords)
+
+madison_vector <- bag_of_words |>
+  filter(author == 'Madison') |>
+  pull(n) |>
+  # make it pretty by giving each element a name
+  set_names(interesting_stopwords)
+
+jay_vector <- bag_of_words |>
+  filter(author == 'Jay') |>
+  pull(n) |>
+  # make it pretty by giving each element a name
+  set_names(interesting_stopwords)
+
+# compare those vectors to the disputed Federalist 50
+disputed_vector <- tidy_federalist |>
+  filter(title == 'No. L.') |>
+  # keep only the three stopwords
+  filter(word %in% interesting_stopwords) |>
+  count(word) |>
+  # convert it to a vector rather than a dataframe
+  pull(n) |>
+  set_names(interesting_stopwords)
+
+hamilton_vector / sum(hamilton_vector)
+madison_vector / sum(madison_vector)
+jay_vector / sum(jay_vector)
+disputed_vector / sum(disputed_vector)
 
 
 ## word cloud some of these papers ----------------
@@ -133,7 +179,7 @@ madison_vector <- bags_of_words |>
 
 jay_vector <- bags_of_words |>
   filter(author == 'Jay') |>
-  pull |>
+  pull(n) |>
   # add names to make the vector more readable
   set_names(interesting_words)
 
