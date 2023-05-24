@@ -91,6 +91,42 @@ jay_vector / sum(jay_vector)
 disputed_vector / sum(disputed_vector)
 
 
+## second pass: consider all the stop words and see if some are more distinctive of some authors
+## than others
+
+federalist_stopwords <- tidy_federalist |>
+  # keep only the stop words
+  inner_join(get_stopwords(source = 'smart'),
+             relationship= 'many-to-many') |>
+  # keep only the papers whose author is known
+  filter(author %in% c('Hamilton', 'Madison', 'Jay')) |>
+  # count up stop words by author
+  count(author, word) |>
+  # compute the proportion of stop-word usage by author
+  group_by(author) |>
+  mutate(prop = n / sum(n) * 100) |>
+  # compare side-side each author's stopword usage
+  # remove the n column
+  select(-n) |>
+  # pivot wider the prop column
+  pivot_wider(values_from = 'prop',
+              names_from = 'author',
+              values_fill = 0) |>
+  # compare each author by taking the ratio of word proportions
+  mutate(HM_Ratio = Hamilton / Madison,
+         HJ_Ratio = Hamilton / Jay,
+         MJ_Ratio = Madison / Jay)
+
+
+
+
+
+
+
+
+
+
+
 ## word cloud some of these papers ----------------
 
 library(wordcloud2)
