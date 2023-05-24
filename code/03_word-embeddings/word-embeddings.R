@@ -31,9 +31,9 @@ tidy_glove <- glove |>
 # we can't visualize 100 dimensions, but we can find the words
 # with the highest cosine similarity
 
-# what words are close to "bill"?
+# what words are close to "democracy"?
 nearest_neighbors(df = tidy_glove,
-                  token = 'can')
+                  token = 'democracy')
 
 # take a moment to try a few!
 
