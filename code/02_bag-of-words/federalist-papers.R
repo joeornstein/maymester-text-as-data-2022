@@ -82,7 +82,8 @@ disputed_vector <- tidy_federalist |>
   filter(title == 'No. L.') |>
   # keep only the three stopwords
   filter(word %in% interesting_stopwords) |>
-  count(word) |>
+  mutate(word = factor(word, levels = interesting_stopwords)) |>
+  count(word, .drop = FALSE) |>
   # convert it to a vector rather than a dataframe
   pull(n) |>
   set_names(interesting_stopwords)
