@@ -53,8 +53,10 @@ interesting_stopwords <- c('be', 'that', 'would')
 bag_of_words <- tidy_federalist |>
   # just keep the stop words that we want to track
   filter(word %in% interesting_stopwords) |>
+  # code words as a factor, so that we can include zeroes in the bag of words vectors
+  mutate(word = factor(word)) |>
   # count up the number of times that each author uses each word
-  count(author, word)
+  count(author, word, .drop = FALSE)
 
 # create vectors for each author
 hamilton_vector <- bag_of_words |>
