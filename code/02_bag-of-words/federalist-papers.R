@@ -47,7 +47,8 @@ tidy_federalist <- d |>
 
 ## first pass: three words we think might be distinctive of these authors' style -------
 
-interesting_stopwords <- c('be', 'that', 'would')
+interesting_stopwords <- c('upon', 'would', 'often', 'tried', 'within', 'although') |>
+  sort()
 
 # create the "bag of words"
 bag_of_words <- tidy_federalist |>
@@ -56,7 +57,9 @@ bag_of_words <- tidy_federalist |>
   # code words as a factor, so that we can include zeroes in the bag of words vectors
   mutate(word = factor(word)) |>
   # count up the number of times that each author uses each word
-  count(author, word, .drop = FALSE)
+  count(author, word, .drop = FALSE) |>
+  # arrange everything in alphabetical order
+  arrange(author, word)
 
 # create vectors for each author
 hamilton_vector <- bag_of_words |>
@@ -93,6 +96,13 @@ madison_vector / sum(madison_vector)
 jay_vector / sum(jay_vector)
 disputed_vector / sum(disputed_vector)
 
+
+dmultinom(x = disputed_vector, prob = hamilton_vector)
+dmultinom(x = disputed_vector, prob = madison_vector)
+dmultinom(x = disputed_vector, prob = jay_vector)
+
+# likelihood ratio
+dmultinom(x = disputed_vector, prob = madison_vector) / dmultinom(x = disputed_vector, prob = hamilton_vector)
 
 ## second pass: consider all the stop words and see if some are more distinctive of some authors
 ## than others
