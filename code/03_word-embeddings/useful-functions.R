@@ -17,3 +17,7 @@ nearest_neighbors <- function(df, token) {
     )(item1, dimension, value) %>%
     select(-item2)
 }
+
+cosine_similarity <- function(x1, x2){
+  sum(x1*x2) / sqrt(sum(x1^2)) / sqrt(sum(x2^2))
+}
