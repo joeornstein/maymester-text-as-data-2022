@@ -77,7 +77,7 @@ tcm <- create_tcm(it, vectorizer, skip_grams_window = 10L)
 
 dim <- 100
 glove <- GlobalVectors$new(rank = dim, x_max = 10)
-wv_main <- glove$fit_transform(tcm, n_iter = 100, convergence_tol = 0.01, n_threads = 8)
+wv_main <- glove$fit_transform(tcm, n_iter = 200, convergence_tol = 0.001, n_threads = 8)
 
 # extract the fitted vectors
 wv_context <- glove$components
@@ -103,7 +103,7 @@ cosine_similarity(word_vectors['slaves',],
 
 # find the "nearest neighbors" of various words in the vocabulary
 sim2(x = word_vectors,
-     y = word_vectors['king', , drop = FALSE],
+     y = word_vectors['athens', , drop = FALSE],
      method = 'cosine',
      norm = 'l2')[,1] |>
   sort(decreasing = TRUE) |>
