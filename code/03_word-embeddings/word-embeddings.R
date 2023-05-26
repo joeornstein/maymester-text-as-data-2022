@@ -10,6 +10,7 @@
 library(tidyverse)
 library(tidytext)
 library(textdata) # to download pre-trained word embeddings
+library(text2vec)
 
 # load some useful functions I'm hiding in another script
 source('code/03_word-embeddings/useful-functions.R')
@@ -38,14 +39,14 @@ rownames(glove) <- vocab
 
 # what words are close to "democracy"?
 sim2(x = glove,
-     y = glove['democracy', , drop = FALSE],
+     y = glove['man', , drop = FALSE],
      method = 'cosine',
      norm = 'l2')[,1] |>
   sort(decreasing = TRUE) |>
-  head(15)
+  head(20)
 
-cosine_similarity(glove['democracy',],
-                  glove['freedom',])
+cosine_similarity(glove['college',],
+                  glove['learn',])
 
 
 # take a moment to try a few!
