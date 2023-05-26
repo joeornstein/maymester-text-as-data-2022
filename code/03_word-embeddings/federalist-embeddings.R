@@ -57,7 +57,7 @@ vocab <- create_vocabulary(it)
 
 # only keep terms that appear at least five times
 # it will be tough to get a good representation of a word we don't see a lot
-vocab <- prune_vocabulary(vocab, term_count_min = 5L)
+vocab <- prune_vocabulary(vocab, term_count_min = 5)
 
 
 ## Step 3: Create the term-co-occurence matrix (TCM) --------
@@ -65,7 +65,7 @@ vocab <- prune_vocabulary(vocab, term_count_min = 5L)
 # Use our filtered vocabulary
 vectorizer <- vocab_vectorizer(vocab)
 # use window of 10 for context words
-tcm <- create_tcm(it, vectorizer, skip_grams_window = 10L)
+tcm <- create_tcm(it, vectorizer, skip_grams_window = 10)
 
 # tcm is now a 3095 x 3095 matrix
 
@@ -77,7 +77,7 @@ tcm <- create_tcm(it, vectorizer, skip_grams_window = 10L)
 
 dim <- 100
 glove <- GlobalVectors$new(rank = dim, x_max = 10)
-wv_main <- glove$fit_transform(tcm, n_iter = 200, convergence_tol = 0.001, n_threads = 8)
+wv_main <- glove$fit_transform(tcm, n_iter = 2000, convergence_tol = 0.0001, n_threads = 8)
 
 # extract the fitted vectors
 wv_context <- glove$components

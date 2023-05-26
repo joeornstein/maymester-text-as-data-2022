@@ -17,14 +17,19 @@ source('code/03_word-embeddings/useful-functions.R')
 
 ## 1. Download the pre-trained GloVe word embeddings ----------
 
+# tell R to give you at least 5 minutes to download a big file
+options(timeout=5*60)
+
 glove <- embedding_glove6b(dimensions = 100)
-glove
 
-# right now it's a matrix, but we can put it into a tidy dataframe like so:
-tidy_glove <- glove |>
-  pivot_longer(contains("d"),
-               names_to = "dimension")
+# convert this to a matrix (makes things *so* much faster)
+vocab <- glove$token
 
+glove <- glove |>
+  select(d1:d100) |>
+  as.matrix()
+
+rownames(glove) <- vocab
 
 ## 2. Explore the embedding space -------------------------
 
@@ -32,13 +37,15 @@ tidy_glove <- glove |>
 # with the highest cosine similarity
 
 # what words are close to "democracy"?
-nearest_neighbors(df = tidy_glove,
-                  token = 'democracy')
+sim2(x = glove,
+     y = glove['democracy', , drop = FALSE],
+     method = 'cosine',
+     norm = 'l2')[,1] |>
+  sort(decreasing = TRUE) |>
+  head(15)
+
+cosine_similarity(glove['democracy',],
+                  glove['freedom',])
+
 
 # take a moment to try a few!
-
-christopher_nn <- nearest_neighbors(df = tidy_glove,
-                                    token = 'christopher')
-
-tabitha_nn <- nearest_neighbors(df = tidy_glove,
-                                    token = 'tabitha')
