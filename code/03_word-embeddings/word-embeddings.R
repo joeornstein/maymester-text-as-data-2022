@@ -39,7 +39,7 @@ rownames(glove) <- vocab
 
 # what words are close to "democracy"?
 sim2(x = glove,
-     y = glove['man', , drop = FALSE],
+     y = glove['democracy', , drop = FALSE],
      method = 'cosine',
      norm = 'l2')[,1] |>
   sort(decreasing = TRUE) |>
