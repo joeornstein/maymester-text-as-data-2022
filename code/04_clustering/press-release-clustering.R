@@ -55,6 +55,8 @@ tidy_press_releases <- df |>
   filter(str_detect(word, '[0-9]', negate = TRUE)) |>
   # create word stems
   mutate(word_stem = wordStem(word)) |>
+  # remove "blank space" token
+  filter(word_stem != '') |>
   # count up bag of word stems
   count(id, word_stem) |>
   # # remove the infrequent word stems
@@ -89,16 +91,16 @@ get_top_words <- function(centers, cluster_of_interest, n = 10){
     head(n)
 }
 
-# cluster 1 (security)
+# cluster 1
 get_top_words(km$centers, 1)
 
-# cluster 2 (legislation / senate business)
+# cluster 2
 get_top_words(km$centers, 2)
 
-# cluster 3 ("partisan taunting")
+# cluster 3
 get_top_words(km$centers, 3)
 
-# cluster 4 (credit claiming for New Jersey projects)
+# cluster 4
 get_top_words(km$centers, 4)
 
 
