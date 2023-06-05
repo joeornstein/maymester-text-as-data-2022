@@ -15,13 +15,17 @@ api_key <- read_file('openai-api-key.txt')
 text2data::setup_openai()
 
 
-complete_prompt('My favorite food is', max_tokens = 30)
+complete_prompt('My favorite food is', max_tokens = 30,
+                openai_api_key = api_key)
 
-complete_prompt('My favorite food is', max_tokens = 1)
+complete_prompt('My favorite food is', max_tokens = 1,
+                openai_api_key = api_key)
 
 
 
-complete_prompt('Decide whether the sentiment of the following statment is Positive or Negative\n\n"Help I am stuck in a well."\n\nSentiment:', max_tokens = 1)
+complete_prompt('Decide whether the sentiment of the following statment is Positive or Negative\n\n"Help I am stuck in a well."\n\nSentiment:',
+                max_tokens = 1,
+                openai_api_key = api_key)
 
 
 
