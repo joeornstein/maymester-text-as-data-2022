@@ -120,7 +120,7 @@ text |>
 
 ### Steps 1 through 4 in a Function
 
-So that's the workflow for retrieving the full text of a bill from the Congress.gov API. If we ever plan to use that workflow ever, it would be wise to put it all into a **function**. That way we're not copy-pasting large blocks of code every time we want to get the text of a new bill.
+And that's the workflow for retrieving the full text of a bill from the Congress.gov API. If we ever plan to use that workflow again, it would be wise to put it all into a **function**. That way we're not copy-pasting large blocks of code every time we want to get the text of a new bill.
 
 ```{r}
 get_bill_text <- function(congress, billType, billNumber){
