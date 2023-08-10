@@ -16,7 +16,7 @@ ggplot(data = df,
 
 # kmeans is included in the base stats package
 km <- kmeans(x = df,
-             centers = 4)
+             centers = 3)
 
 km
 
@@ -27,3 +27,47 @@ df |>
   geom_point() +
   theme_minimal()
 
+
+
+# palmer penguins -------
+
+library(palmerpenguins)
+
+# remove missing flipper and bill length data
+df <- penguins |>
+  filter(!is.na(bill_length_mm), !is.na(flipper_length_mm))
+
+ggplot(data = df,
+       mapping = aes(x=bill_length_mm, y=flipper_length_mm)) +
+  geom_point()
+
+
+
+# get those three clusters using kmeans
+km <- kmeans(x = df |>
+               select(bill_length_mm, flipper_length_mm),
+             centers = 3)
+df |>
+  mutate(cluster_assignment = km$cluster) |>
+  ggplot(mapping = aes(x=bill_length_mm, y=flipper_length_mm, color = factor(cluster_assignment))) +
+  geom_point() +
+  theme_minimal()
+
+# compare to species
+df |>
+  mutate(cluster_assignment = km$cluster) |>
+  ggplot(mapping = aes(x=bill_length_mm, y=flipper_length_mm, color = species)) +
+  geom_point() +
+  theme_minimal()
+
+
+# I can't visualize it, but what if we included more information in the
+# clustering algorithm?
+km <- kmeans(x = df |>
+               select(bill_length_mm, flipper_length_mm, bill_depth_mm),
+             centers = 3)
+
+# does this do a good job predicting species?
+df |>
+  mutate(cluster_assignment = km$cluster) |>
+  count(species, cluster_assignment)

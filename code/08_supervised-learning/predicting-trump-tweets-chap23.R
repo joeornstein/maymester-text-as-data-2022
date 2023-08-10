@@ -72,16 +72,43 @@ tidy_tweets <- tweets |>
 
 
 # split into train and test sets
+set.seed(42)
 tweet_split <- initial_split(tidy_tweets,
                              prop = 0.8)
 
 train <- training(tweet_split)
 test <- testing(tweet_split)
 
+
+## quick logistic regression primer
+train$y <- as.numeric(train$.source == 'Android')
+
+ggplot(data = train,
+       mapping = aes(x=makeamericagreatagain,
+                     y=y)) +
+  geom_point() +
+  geom_smooth(method = "lm")
+# this is bad. it goes too far below zero
+
+ggplot(data = train,
+       mapping = aes(x=makeamericagreatagain,
+                     y=y)) +
+  geom_point() +
+  geom_smooth(method = "glm",
+              method.args = list(family = "binomial"),
+              se = FALSE)
+# use a model that restricts the probability between zero and one.
+
+# remove the 'y' variable
+train <- train |>
+  select(-y)
+
+
 # fit three logistic regression models:
 # underfit, overfit, and regularized
 
 # underfit model
+
 model1 <- logistic_reg() |>
   fit(formula = .source ~ crooked + dumb + emails +
         crowds + hillary + winning + weak,
@@ -118,6 +145,11 @@ tidy(model2)
 train |>
   bind_cols(predict(model2, train)) |>
   accuracy(truth = .source, estimate = .pred_class)
+
+train |>
+  bind_cols(predict(model2, train)) |>
+  conf_mat(truth = .source, estimate = .pred_class) |>
+  autoplot(type = 'heatmap')
 
 # out-of-sample fit
 test |>
@@ -157,7 +189,58 @@ test |>
   conf_mat(truth = .source, estimate = .pred_class) |>
   autoplot(type = 'heatmap')
 
-# cross-validation:
+# probability density plot
+test |>
+  bind_cols(predict(model3, test, type = 'prob')) |>
+  ggplot(mapping = aes(x=.pred_Android, fill = .source)) +
+  geom_density(alpha = 0.6) +
+  labs(x = 'Predicted Probability Tweet Came From Trump')
+
+## Out-of-sample prediction on the tweets from web client ----------------------
+
+
+tweets <- trump_tweets_df |>
+  select(.id = id,
+         .source = statusSource,
+         .text = text,
+         .created = created) |>
+  extract(.source, '.source', "Twitter for (.*?)<") |>
+  filter(is.na(.source))
+
+
+# tokenize
+pc_tweets <- tweets |>
+  unnest_tokens(input = '.text',
+                output = 'word') |>
+  mutate(word = factor(word, levels = words_to_keep)) |>
+  filter(word %in% words_to_keep) |>
+  count(.id, word, .drop = FALSE) |>
+  bind_tf_idf(term = 'word',
+              document = '.id',
+              n = 'n') |>
+  select(.id, word, tf) |>
+  pivot_wider(id_cols = '.id',
+              names_from = 'word',
+              values_from = 'tf',
+              values_fill = 0)
+
+# make predictions
+pc_tweets |>
+  bind_cols(predict(model3, pc_tweets, type = 'prob')) |>
+  ggplot(mapping = aes(x=.pred_Android)) +
+  geom_histogram(color = 'black') +
+  labs(x = 'Prob(Trump)')
+# seems like the web client tweets came from both Trump and staffers
+
+
+
+
+
+
+
+
+
+# cross-validation: ------------
 
 # first, assign each observation in train to a "fold"
 folds <- vfold_cv(train |>
@@ -277,6 +360,7 @@ autoplot(rf_tune) +
   labs(
     title = "Random forest performance across regularization penalties",
   )
+
 
 
 

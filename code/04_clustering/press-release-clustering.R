@@ -55,10 +55,14 @@ tidy_press_releases <- df |>
   filter(str_detect(word, '[0-9]', negate = TRUE)) |>
   # create word stems
   mutate(word_stem = wordStem(word)) |>
+  # remove "blank space" token
+  filter(word_stem != '') |>
   # count up bag of word stems
   count(id, word_stem) |>
   # # remove the infrequent word stems
   # filter(n > 2) |>
+  # remove the single character word stems (like "D" and "R")
+  filter(nchar(word_stem) != 1) |>
   # compute tf-idf
   bind_tf_idf(term = 'word_stem',
               document = 'id',
@@ -76,7 +80,7 @@ lautenberg_dtm
 ## Step 3: K-means clustering -------------------------
 
 km <- kmeans(x = lautenberg_dtm,
-             centers = 4,
+             centers = 6,
              nstart = 100)
 
 table(km$cluster)
@@ -89,16 +93,16 @@ get_top_words <- function(centers, cluster_of_interest, n = 10){
     head(n)
 }
 
-# cluster 1 (security)
+# cluster 1
 get_top_words(km$centers, 1)
 
-# cluster 2 (legislation / senate business)
+# cluster 2
 get_top_words(km$centers, 2)
 
-# cluster 3 ("partisan taunting")
+# cluster 3
 get_top_words(km$centers, 3)
 
-# cluster 4 (credit claiming for New Jersey projects)
+# cluster 4
 get_top_words(km$centers, 4)
 
 
@@ -170,6 +174,8 @@ tidy_press_releases <- df |>
   anti_join(get_stopwords()) |>
   # remove numerals
   filter(str_detect(word, '[0-9]', negate = TRUE)) |>
+  # remove single character words
+  filter(nchar(word) != 1) |>
   # remove the words that aren't in the glove lexicon
   filter(word %in% glove_tokens)
 
@@ -178,6 +184,8 @@ document_embeddings <- matrix(nrow = 558,
                               ncol = 100)
 
 for(i in 1:558){
+
+  print(i)
 
   list_of_words <- tidy_press_releases |>
     filter(id == i) |>
@@ -194,8 +202,6 @@ km <- kmeans(x = document_embeddings,
 
 table(km$cluster)
 
-
-# what do the top words in those clusters look like?
 
 # merge the cluster assignments back with the documents
 cluster_assignments <- tibble(id = 1:558,

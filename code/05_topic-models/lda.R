@@ -31,6 +31,8 @@ tidy_press_releases <- df |>
   count(id, word_stem) |>
   # # remove the infrequent word stems
   # filter(n > 2) |>
+  # remove single-character word stems
+  filter(nchar(word_stem) != 1) |>
   # compute tf-idf
   bind_tf_idf(term = 'word_stem',
               document = 'id',
@@ -48,7 +50,7 @@ lautenberg_dtm
 
 ## Step 2: Fit the LDA model ----------------------------
 
-lautenberg_lda <- LDA(lautenberg_dtm, k = 50, control = list(seed = 42))
+lautenberg_lda <- LDA(lautenberg_dtm, k = 20, control = list(seed = 42))
 
 
 ## Step 3: Examine the topic-level probability vectors -----------------------
@@ -91,3 +93,9 @@ lautenberg_documents <- tidy(lautenberg_lda, matrix = 'gamma') |>
   arrange(document, topic)
 
 lautenberg_documents
+
+# what are the most high-probability topics assigned to press release #1?
+lautenberg_documents |>
+  filter(document == 1) |>
+  arrange(-gamma)
+
