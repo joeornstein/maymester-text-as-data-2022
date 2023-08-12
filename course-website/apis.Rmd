@@ -9,11 +9,11 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 library(tidyverse)
 ```
 
-In the [webscraping tutorial](webscraping.html), we harvested text directly from the HTML code of a webpage. This can be pretty laborious, so fortunately, there are some websites that provide an easier path to collecting their data, called an Application Programming Interface (API). Generally, when an API is available, using it is the easiest and [most polite](https://joeornstein.github.io/text-as-data/webscraping.html#being-polite) way to harvest your text data. On this page, we'll introduce ourselves to APIs by collecting bill text from the US Congress and video transcripts from YouTube.
+In the [webscraping tutorial](webscraping.html), we harvested text directly from the HTML code of a webpage. This can be pretty laborious, so fortunately, some websites provide an easier path to collecting their data, called an Application Programming Interface (API). Generally, when an API is available, using it is the easiest and [most polite](https://joeornstein.github.io/text-as-data/webscraping.html#being-polite) way to harvest your text data. On this page, we'll introduce ourselves to APIs by collecting bill text from the US Congress and video transcripts from YouTube.
 
 ## Congress API
 
-Suppose we wanted to collect the text of bills introduced in the US Congress. As an example, let's start the full text with H.R.1 from the 115th Congress (The Tax Cuts and Jobs Act) available [here](https://www.congress.gov/bill/115th-congress/house-bill/1/text). We can access that page through our web browser, but if I try to read the HTML in `R`...
+Suppose we wanted to collect the text of bills introduced in the US Congress. As an example, let's start with the full text of H.R.1 from the 115th Congress (The Tax Cuts and Jobs Act) available [here](https://www.congress.gov/bill/115th-congress/house-bill/1/text). We can access that page through our web browser, but if I try to read the HTML in `R`...
 
 ```{r, eval = FALSE}
 library(tidyverse)
@@ -26,7 +26,7 @@ page <- read_html("https://www.congress.gov/bill/115th-congress/house-bill/1/tex
 
 ...I get a foreboding "HTTP Error 403 - Forbidden" message. It turns out the US Federal Government does not take kindly to bots scraping their webpages.
 
-Fortunately, the good people at congress.gov provide an API that we can use instead. An API is, in essence, a special web address that returns data instead of a webpage. For congress.gov, these web addresses all begin with `https://api.congress.gov/v3/`. But to access them, we'll need an **API key**, a unique password that identifies each user. You can sign up for one at the top of the [documentation page](https://gpo.congress.gov/).
+Fortunately, the good people at congress.gov provide an API that we can use instead. An API endpoint is, in essence, a special web address that returns data instead of a webpage. For congress.gov, these web addresses all begin with `https://api.congress.gov/v3/`. But to access them, we'll need an **API key**, a unique password that identifies each user. You can sign up for one at the top of the [documentation page](https://gpo.congress.gov/).
 
 Once you have your API key, you will include it as part of the web address you use to access information. Per the [API documentation](https://gpo.congress.gov/#/bill/bill_text), you can retrieve the text of bills with a web address in the following format:
 
@@ -38,7 +38,7 @@ Wherever you see curly braces {}, replace them with values for the bill you want
 
 ### Step 1: Keep Your API Key Safe
 
-You may be tempted to copy-paste your API key directly into your `R` script. Avoid this temptation. It's best practice to keep things like passwords and API keys saved in a separate location, not hard-coded into your scripts. That way, if you share you code (like I'm doing now), you don't accidentally reveal your secrets. I'm keeping my API key in a text file called `congress-api-key.txt`. The first step is to read it into memory.
+You will be tempted to copy-paste your API key directly into your `R` script. Avoid this temptation. It's best practice to keep things like passwords and API keys saved in a separate location, not hard-coded into your scripts. That way, if you share your code (like I'm doing now), you don't accidentally reveal your secrets. I'm keeping my API key in a text file called `congress-api-key.txt`. The first step is to read it into memory.
 
 ```{r}
 api_key <- read_file('congress-api-key.txt')
@@ -46,7 +46,7 @@ api_key <- read_file('congress-api-key.txt')
 
 ### Step 2: Get the data from the API
 
-We'll use the `glue` package to format the web addresses:
+We'll use the `glue` package to format web addresses:
 
 ```{r}
 library(glue)
@@ -55,6 +55,7 @@ congress <- 115
 billType <- 'hr'
 billNumber <- 1
 
+# glue() uses curly braces when inserting variable names
 glue('/bill/{congress}/{billType}/{billNumber}/text')
 
 url <- glue('https://api.congress.gov/v3/bill/{congress}/{billType}/{billNumber}/text?api_key={api_key}')
@@ -82,7 +83,7 @@ content <- d$content |>
   fromJSON()
 ```
 
-Now we have a list called `content`. Sadly, this is not yet the content we want. The wrinkle here is that there are 8 versions of the text of this bill, following the amendment process from when it was first introduced in the House to when it was finally signed into law. The `content$textVersions` object tells us where to find each version of the text. 
+Now we have a list called `content`. Sadly, this is not yet the content we want. The wrinkle here is that there are 8 versions of the text of this bill, from the first version when it was introduced in the House to the final version that was signed into law. The `content$textVersions` object tells us where to find each version of the text. 
 
 ```{r}
 content$textVersions
@@ -110,7 +111,7 @@ textURL <- mostRecent[[1]] |>
 text <- read_file(textURL)
 ```
 
-Finally! The object `text` contains the entire text of the bill. Printing it in its entirety would be too long, but here's a snippet:
+Finally! The object `text` contains the entire text of the bill. Printing this in its entirety would be too long, but here's a snippet:
 
 ```{r}
 text |> 
@@ -118,9 +119,9 @@ text |>
   cat()
 ```
 
-### Steps 1 through 4 in a Function
+### Putting Steps 1 through 4 into a function
 
-And that's the workflow for retrieving the full text of a bill from the Congress.gov API. If we ever plan to use that workflow again, it would be wise to put it all into a **function**. That way we're not copy-pasting large blocks of code every time we want to get the text of a new bill.
+Steps 1 through 4 compose the entire workflow for retrieving the full text of a bill from the Congress.gov API. If we ever plan to use that workflow again, it would be wise to encode it as a **function**. That way we're not copy-pasting large blocks of code every time we want to get the text of a new bill. Let's create a new function called `get_bill_text()`, which inputs the `congress`, `billType` and `billNumber`, goes through Steps 1-4, and returns the full text of the bill we want.
 
 ```{r}
 get_bill_text <- function(congress, billType, billNumber){
@@ -160,55 +161,61 @@ Does the function work? If so, it should get the same text object we created bef
 text == get_bill_text(congress = 115, billType = 'hr', billNumber = 1)
 ```
 
+Play with the function a bit, changing the inputs to make sure that it returns the correct text when you ask for a different bill. And see the practice problems at the end of the page to get more practice working with APIs.
 
 ## YouTube API
 
+In this tutorial, I'll show you how to get video transcripts from YouTube through its API. We'll be using the [youtube-transcript-api](https://pypi.org/project/youtube-transcript-api/) Python module, which lets us avoid all the work we just did formatting web addresses for the congress.gov API. All we need is the video ID of the YouTube transcript we want.
 
+Oh. And we need to be able to run Python modules from `R`. Fortunately, the `reticulate` package is going to make that easy for us.
 
-[youtube-transcript-api](https://pypi.org/project/youtube-transcript-api/)
+### How to Drive Python from RStudio
 
-For `R` users, the [`reticulate`](https://rstudio.github.io/reticulate/) package is a convenient way to run Python code and return outputs as `R` objects. I'll demonstrate here how we can use that package to get transcripts from the YouTube API.
+For `R` users, the [`reticulate`](https://rstudio.github.io/reticulate/) package is a convenient way to run Python code and return outputs as `R` objects. The setup will be a little bit different depending on whether you're working with a PC or Mac.
 
-### Setup
+#### Windows PC Setup
 
-
+If you're on a Windows machine, just install the `reticulate` package, then use it to install Python on your machine, with the following two lines of code:
 
 ```{r, echo = TRUE, eval = FALSE}
 install.packages('reticulate')
 reticulate::install_miniconda()
 ```
 
-#### For Mac Users
+#### Mac Setup
 
-If you are a Mac user, you should enter the following command to create a Python "virtual environment".
+If you are a Mac user, you should follow the instructions for Windows PCs above, but then you're going to enter the following `R` command to create a Python "virtual environment".
 
 ```{r, eval=FALSE}
 reticulate::conda_create('myenv')
 ```
 
-Then restart your R session, then enter the following command to use the virtual environment you created.
+Then restart your R session, then enter the following command to use the virtual environment you just created.
 
 ```{r, eval = FALSE}
 reticulate::use_condaenv('myenv')
 ```
 
-### Install the Python package
+#### Install the Python package
 
-Regardless of your operating system, you want to install the `youtube-transcript-api` Python module, using the following function from `reticulate`.
+Regardless of your operating system, you'll now want to install the `youtube-transcript-api` Python module, using the following function from `reticulate`.
 
 ```{r, eval=FALSE}
 reticulate::py_install('youtube-transcript-api')
 ```
 
+Setup is done! Let's play.
 
+### Step 1:
 
-## Example Workflow
 
 ## Practice Problems
 
 1. Get the full text of the [Patient Protection and Affordable Care Act (2010)](https://www.congress.gov/bill/111th-congress/house-bill/3590).
 
 2. Using the `get_bill_text()` function we created, create a dataframe where each row is a bill, and include columns for `congress`, `billType`, `billNumber`, and `full_text`. Collect the full text for at least 10 bills.
+
+3. Create a function to get the Congressional Research Service's *summary* of a bill from the congress.gov API. You'll need to check the documentation to figure out how to format the URL for the correct API endpoint.
 
 ## Further Reading
 
