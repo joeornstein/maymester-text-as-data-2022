@@ -1,5 +1,5 @@
 ---
-title: "Application Programming Interfaces"
+title: "Application Programming Interfaces (APIs)"
 description: |
   When webscraping is too difficult and/or impolite
 ---
@@ -13,7 +13,7 @@ In the [webscraping tutorial](webscraping.html), we harvested text directly from
 
 ## Congress API
 
-Suppose we wanted to collect the text of bills introduced in the US Congress. As an example, let's start with the full text of H.R.1 from the 115th Congress (The Tax Cuts and Jobs Act) available [here](https://www.congress.gov/bill/115th-congress/house-bill/1/text). We can access that page through our web browser, but if I try to read the HTML in `R`...
+Suppose we wanted to collect the full text of bills introduced in the US Congress. As a running example, let's try to load the text of "The Tax Cuts and Jobs Act" (HR 1, 115th Congress), which you can find [here](https://www.congress.gov/bill/115th-congress/house-bill/1/text). Although we can access that page through our web browser, if I try to read the HTML in `R`...
 
 ```{r, eval = FALSE}
 library(tidyverse)
@@ -34,7 +34,7 @@ Once you have your API key, you will include it as part of the web address you u
 https://api.congress.gov/v3/bill/{congress}/{billType}/{billNumber}/text?api_key={INSERT_KEY}
 ```
 
-Wherever you see curly braces {}, replace them with values for the bill you want. In our example, `{congress} = 115`, `{billType} = hr`, and `{billNumber} = 1`. Rather than accessing this web address through the browser, we will ask `R` to read the data directly.
+Wherever you see curly braces {}, replace them with values for the bill you want. In our example, those values will be `{congress} = 115`, `{billType} = hr`, and `{billNumber} = 1`. Rather than accessing this web address through the browser, we will ask `R` to read the data from the API endpoint directly.
 
 ### Step 1: Keep Your API Key Safe
 
@@ -46,7 +46,7 @@ api_key <- read_file('congress-api-key.txt')
 
 ### Step 2: Get the data from the API
 
-We'll use the `glue` package to format web addresses:
+Next, we'll use the `glue` package to format web addresses:
 
 ```{r}
 library(glue)
@@ -70,7 +70,7 @@ d <- GET(url)
 
 ### Step 3: Convert to content from JSON to an R object
 
-The object `d` is a JSON object. Fortunately, we don't have to know what that is or how to read it. We can just use the `jsonlite` package to convert it into an `R` object.
+The object `d` is a JSON object. If you don't know what a JSON object is, not to worry! We can just use the `jsonlite` package to convert it into an `R` object.
 
 ```{r}
 library(jsonlite)
@@ -83,7 +83,7 @@ content <- d$content |>
   fromJSON()
 ```
 
-Now we have a list called `content`. Sadly, this is not yet the content we want. The wrinkle here is that there are 8 versions of the text of this bill, from the first version when it was introduced in the House to the final version that was signed into law. The `content$textVersions` object tells us where to find each version of the text. 
+Now we have an `R` object (a list) called `content`. Sadly, this is not yet the content we want. The wrinkle here is that there are 8 versions of the text of this bill, beginning with the first version that was introduced in the House and ending with the final version that was signed into law. The `content$textVersions` object tells us where to find the full text of each version. 
 
 ```{r}
 content$textVersions
@@ -121,7 +121,7 @@ text |>
 
 ### Putting Steps 1 through 4 into a function
 
-Steps 1 through 4 compose the entire workflow for retrieving the full text of a bill from the Congress.gov API. If we ever plan to use that workflow again, it would be wise to encode it as a **function**. That way we're not copy-pasting large blocks of code every time we want to get the text of a new bill. Let's create a new function called `get_bill_text()`, which inputs the `congress`, `billType` and `billNumber`, goes through Steps 1-4, and returns the full text of the bill we want.
+Steps 1 through 4 make up the entire workflow for retrieving the text of a bill from the congress.gov API. If we ever plan to use that workflow again, it would be wise to encode it as a **function**. That way we're not copy-pasting large blocks of code every time we want to get the text of a new bill. Let's create a new function called `get_bill_text()`. This function will take as inputs the `congress`, `billType` and `billNumber` of a bill, complete Steps 1-4, and return the full text of the bill we want.
 
 ```{r}
 get_bill_text <- function(congress, billType, billNumber){
@@ -161,13 +161,11 @@ Does the function work? If so, it should get the same text object we created bef
 text == get_bill_text(congress = 115, billType = 'hr', billNumber = 1)
 ```
 
-Play with the function a bit, changing the inputs to make sure that it returns the correct text when you ask for a different bill. And see the practice problems at the end of the page to get more practice working with APIs.
+Play with the function a bit, changing the inputs to make sure that it returns the correct text when you ask for a different bill. And see the practice problems at the end of the page to get more practice working with the congress.gov API.
 
 ## YouTube API
 
-In this tutorial, I'll show you how to get video transcripts from YouTube through its API. We'll be using the [youtube-transcript-api](https://pypi.org/project/youtube-transcript-api/) Python module, which lets us avoid all the work we just did formatting web addresses for the congress.gov API. All we need is the video ID of the YouTube transcript we want.
-
-Oh. And we need to be able to run Python modules from `R`. Fortunately, the `reticulate` package is going to make that easy for us.
+In this next tutorial, we'll see how to retrieve YouTube video transcripts using its API and the [youtube-transcript-api](https://pypi.org/project/youtube-transcript-api/) Python module. This Python module allows us to avoid all tedious the work we did formatting web addresses for the congress.gov API. We just need a way to run Python modules from `R`. Fortunately, the `reticulate` package does just that.
 
 ### How to Drive Python from RStudio
 
@@ -175,7 +173,7 @@ For `R` users, the [`reticulate`](https://rstudio.github.io/reticulate/) package
 
 #### Windows PC Setup
 
-If you're on a Windows machine, just install the `reticulate` package, then use it to install Python on your machine, with the following two lines of code:
+If you're on a Windows machine, first install the `reticulate` package through the R console, then install a version of Python, using the following two lines of code:
 
 ```{r, echo = TRUE, eval = FALSE}
 install.packages('reticulate')
@@ -184,13 +182,13 @@ reticulate::install_miniconda()
 
 #### Mac Setup
 
-If you are a Mac user, you should follow the instructions for Windows PCs above, but then you're going to enter the following `R` command to create a Python "virtual environment".
+If you are a Mac user, you should follow the instructions for Windows PCs above, but then you're going to create a Python "virtual environment", using the following command in the R console.
 
 ```{r, eval=FALSE}
 reticulate::conda_create('myenv')
 ```
 
-Then restart your R session, then enter the following command to use the virtual environment you just created.
+Next, restart your R session. Then enter the following command to use the virtual environment you just created.
 
 ```{r, eval = FALSE}
 reticulate::use_condaenv('myenv')
@@ -206,8 +204,96 @@ reticulate::py_install('youtube-transcript-api')
 
 Setup is done! Let's play.
 
-### Step 1:
+### Step 1: Get the video ID
 
+Suppose we want the transcript of this YouTube video:
+
+```{r}
+knitr::include_url('https://www.youtube.com/watch?v=mLyOj_QD4a4')
+```
+
+Note that the quality of these auto-generated transcripts can vary significantly, depending on audio quality. You can click the CC button in the bottom right of the video to get a sense of the quality of the closed captions.
+
+To get the transcript of this video, we'll need the video ID, which you can find at the end of the video's URL (e.g. the bolded text here):
+
+> https://www.youtube.com/watch?v=**mLyOj_QD4a4**
+
+### Step 2: Create a Python object
+
+Next, we'll *import* the Python module, creating an object called `youtubecaption`.
+
+```{r}
+youtubecaption <- reticulate::import('youtube_transcript_api')
+```
+
+### Step 3: Get the transcript
+
+We can then use the Python module to get the transcript of the video we want.
+
+```{r}
+d <- youtubecaption$YouTubeTranscriptApi$get_transcript('mLyOj_QD4a4')
+```
+
+Notice that the object `d` is a list object with 50 entries. Each element contains a snippet of text from the transcript, along with its timestamp and duration.
+
+```{r}
+d[[1]]
+d[[2]]
+```
+
+### Step 4 (optional): Paste together the transcript parts
+
+If we would rather have the entire transcript in a single character object, we can loop through the list and paste all the text snippets together, like so:
+
+```{r}
+# start with an empty character object
+transcript <- ''
+
+# for each element in the list, paste it onto the existing transcript
+for(i in 1:length(d)){
+  transcript <- paste(transcript, d[[i]]$text)
+}
+
+transcript
+```
+
+The `transcript` object is now a single character object with the entire video transcript.
+
+
+### Putting Steps 1 through 4 into a function
+
+As in the last tutorial, it's best practice to write a function any time you've created a multi-step workflow that you'd like to use more than once.
+
+```{r}
+get_youtube_transcript <- function(video_id, lang = 'en'){
+
+  # 1. create an object from the python package
+  youtubecaption <- reticulate::import('youtube_transcript_api')
+
+  # 2. get the transcript from the video you want
+  d <- youtubecaption$YouTubeTranscriptApi$get_transcript(video_id,
+                                                          languages = c(lang, 'en'))
+
+
+  # 3. paste together the transcript snippets
+  transcript <- ''
+  for(i in 1:length(d)){
+    transcript <- paste(transcript, d[[i]]$text)
+  }
+
+  return(transcript)
+}
+```
+
+Notice that I've written this function with two inputs: the video ID and an option to create transcripts for videos in different languages. For a list of available language codes, see the ISO 639-1 column [here](https://www.loc.gov/standards/iso639-2/php/code_list.php).
+
+To verify that the function works, let's pull the transcript of the [2023 State of the Union Address](https://www.youtube.com/watch?v=gzcBTUvVp7M):
+
+```{r}
+sotu_transcript <- get_youtube_transcript(video_id = 'gzcBTUvVp7M')
+
+substr(sotu_transcript, 1, 1000)
+```
 
 ## Practice Problems
 
@@ -217,6 +303,10 @@ Setup is done! Let's play.
 
 3. Create a function to get the Congressional Research Service's *summary* of a bill from the congress.gov API. You'll need to check the documentation to figure out how to format the URL for the correct API endpoint.
 
+4. The [sotu](bag-of-words.html) package is missing some of the most recent State of the Union addresses. See if you can collect their transcripts through YouTube. How is the quality of those transcripts?
+
 ## Further Reading
 
 - Christopher Kennedy's [`congress`](http://christophertkenny.com/congress/) package, which provides a tidy `R` interface to the congress.gov API. 
+
+- The `youtube-transcript-api` [module documentation](https://pypi.org/project/youtube-transcript-api/)
