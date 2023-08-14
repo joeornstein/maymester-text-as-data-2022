@@ -216,7 +216,7 @@ Note that the quality of these auto-generated transcripts can vary significantly
 
 To get the transcript of this video, we'll need the video ID, which you can find at the end of the video's URL (e.g. the bolded text here):
 
-> https://www.youtube.com/watch?v=**mLyOj_QD4a4**
+https://www.youtube.com/watch?v=**mLyOj_QD4a4**
 
 ### Step 2: Create a Python object
 
@@ -287,7 +287,11 @@ get_youtube_transcript <- function(video_id, lang = 'en'){
 
 Notice that I've written this function with two inputs: the video ID and an option to create transcripts for videos in different languages. For a list of available language codes, see the ISO 639-1 column [here](https://www.loc.gov/standards/iso639-2/php/code_list.php).
 
-To verify that the function works, let's pull the transcript of the [2023 State of the Union Address](https://www.youtube.com/watch?v=gzcBTUvVp7M):
+To verify that the function works, let's pull the transcript of the [2023 State of the Union Address](https://www.youtube.com/watch?v=gzcBTUvVp7M).
+
+```{r}
+knitr::include_url('https://www.youtube.com/watch?v=gzcBTUvVp7M')
+```
 
 ```{r}
 sotu_transcript <- get_youtube_transcript(video_id = 'gzcBTUvVp7M')
