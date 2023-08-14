@@ -20,7 +20,7 @@
 # 1. create an object from the python package
 youtubecaption <- reticulate::import('youtube_transcript_api')
 
-# 2. get the transcript from the video you want
+  # 2. get the transcript from the video you want
 d <- youtubecaption$YouTubeTranscriptApi$get_transcript('5417se8E04E')
 
 # notice that this comes to us as a giant list with timestamps.
