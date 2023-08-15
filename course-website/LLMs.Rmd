@@ -1,0 +1,196 @@
+---
+title: "Large Language Models (LLMs)"
+description: |
+  
+bibliography: references.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+INTRO to LLMs and adaptation. Two blog posts I have found very helpful in explaining how they work without being overly technical. In nutshell, an LLM is trained to predict the next word in a sequence, trained on a massive quantity of language data scraped from the Internet. Words are represented with  [embeddings](word-embeddings.html), and a unique feature of the **transformer** model is that each word embedding is modified based on what words appear nearby (a process called **self-attention**). TODO: Do we need this? Or just point to the blog posts? 
+
+If you'd like to know more about how LLMs work, I strongly reccomend For our purposes here, it suffices to know that an LLM is a model that inputs a sequence of words and outputs a set of words that are most likely to follow that sequence. And if we have a model that is sufficiently good at that task, we can *adapt* it to perform all sorts of text-as-data tasks. To show you how, will use the `text2data` R package create LLM prompts and submit them to OpenAI's GPT-3.[^qualms] Let's start by getting that set up.
+
+[^qualms]: I have qualms about using closed-source models for scientific research [@spirlingWhyOpensourceGenerative2023], but for the time being the ease-of-use and capabilities of OpenAI's models are sufficiently beyond those of similar open-source models that it makes sense to start here. I will update this page and the R package when I have identified a suitable open-source replacement.
+
+
+## Setting Up The `text2data` Package
+
+The package is currently available as a GitHub repository. To install, first make sure you have the `devtools` package available, then you can install the package with the following line of code:
+
+```{r, eval = FALSE}
+devtools::install_github('joeornstein/text2data')
+```
+
+If you have not yet installed Python and the `reticulate` package on your computer, follow the instructions for doing so [here](APIs.html#How to Drive Python from RStudio). Once that is complete, you can set up OpenAI's Python module, which will allow you to submit prompts to the GPT-3 API. The function `setup_openai()` will handle this installation for you:
+
+```{r, eval = FALSE}
+library(text2data)
+
+setup_openai()
+```
+
+Next, you will also need an account with OpenAI. You can sign up [here](https://platform.openai.com/signup), after which you'll need generate an API key [here](https://platform.openai.com/account/api-keys). I recommend adding this [API key](APIs.html) as a variable in your operating system environment called `OPENAI_API_KEY`; that way you won't risk leaking it by hard-coding it into your `R` scripts. The `text2data` package will automatically look for your API key under that variable name, and will prompt you to enter the API key manually if it can't find one there. If you're unfamiliar with setting Environment Variables in your operating system, [here](https://dev.to/biplov/handling-passwords-and-secret-keys-using-environment-variables-2ei0) are some helpful instructions. Note that you may need to restart your computer after completing this step.
+
+Once you have completed these setup steps, we can begin.
+
+## Completing Prompts
+
+The workhorse function of the `text2data` package is `complete_prompt()`. It submits a sequence of words (the prompt) to the OpenAI API, and returns a dataframe with the five highest-probability next word predictions and their associated probabilities.
+
+```{r}
+library(text2data)
+
+complete_prompt(prompt = 'My favorite food is')
+```
+
+If you prefer the model to autoregressively generate text instead of outputting the next-word probabilities, set the `max_tokens` argument greater than 1. The function will return a character object with the most likely completion.
+
+```{r}
+complete_prompt(prompt = 'My favorite food is', 
+                max_tokens = 24)
+```
+
+For the moment, 
+
+Footnote: This version of the model is scheduled for [deprecation](https://platform.openai.com/docs/deprecations/) on January 4, 2024. After that date, use 'davinci-002'.
+
+## Formatting Prompts
+
+Manually typing prompts with multiple few-shot examples can be tedious and error-prone, particularly when performing the sort of contextual prompting we recommend in the paper. So we include the `format_prompt()` function to aid in that process.
+
+The function is designed with classification problems in mind. If you input the text you would like to classify along with a set of instructions, the default prompt template looks like this:
+
+```{r}
+library(text2data)
+
+format_prompt(text = 'I am feeling happy today.',
+              instructions = 'Decide whether this statment is happy or sad.')
+```
+
+You can customize the template using `glue` syntax, with placeholders for {text} and {label}.
+
+```{r}
+format_prompt(text = 'I am feeling happy today.',
+              instructions = 'Decide whether this statment is happy or sad.',
+              template = 'Statement: {text}\nSentiment: {label}')
+```
+
+This is particularly useful when including few-shot examples in the prompt. If you input these examples as a tidy dataframe, the `format_prompt()` function will paste them into the prompt them according to the template. To illustrate, we can classify a tweet from from the social media sentiment application. First, load the Supreme Court Tweets dataset, which is included with the package.
+
+```{r}
+data(scotus_tweets) # the full dataset
+data(scotus_tweets_examples) # a dataframe with few-shot examples
+```
+
+```{r}
+format_prompt(text = scotus_tweets$text[42],
+              instructions = 'Classify these tweets as Positive, Neutral, or Negative',
+              examples = scotus_tweets_examples,
+              template = 'Tweet: {text}\nSentiment: {label}')
+```
+
+This prompt can then be used as an input to `complete_prompt()`.
+
+```{r}
+format_prompt(text = scotus_tweets$text[42],
+              instructions = 'Classify these tweets as Positive, Neutral, or Negative',
+              examples = scotus_tweets_examples,
+              template = 'Tweet: {text}\nSentiment: {label}') |> 
+  complete_prompt(model = 'davinci')
+```
+
+Note that I am using the 'davinci' model variant, the original version of GPT-3 that was not......(TODO: how much do we want to say about RLHF?)
+
+
+
+## Classification Performance
+
+
+```{r, echo = FALSE}
+# TODO TODO: Need to update the package with these example flags.
+scotus_tweets$few_shot_example <- as.numeric(scotus_tweets$tweet_id %in% c(
+  '32117789_2018-06-05T02:04:20.000Z', '26730338_2018-06-04T16:12:13.000Z',
+  '772279633060491264_2018-06-04T14:47:05.000Z', '236655360_2018-06-04T14:24:46.000Z', 
+  '1478101897_2018-06-04T18:09:51.000Z', '21792408_2018-06-04T15:46:03.000Z'
+))
+```
+
+First, create our dataset of few-shot examples. These are six tweets that were unanimously coded by three human annotators as Positive, Negative, or Neutral (two per category).
+
+```{r}
+few_shot_examples <- scotus_tweets |> 
+                filter(case == 'masterpiece', few_shot_example == 1) |> 
+                mutate(label = case_when(expert1 == 1 ~ 'Positive',
+                                         expert1 == 0 ~ 'Neutral',
+                                         expert1 == -1 ~ 'Negative')) |> 
+                select(text, label)
+```
+
+We can use the `format_prompt()` to create the prompt template with a placeholder for the tweet.
+
+```{r}
+prompt <- format_prompt(text = '{TWEET}',
+              instructions = 'Read these tweets posted the day after the US Supreme Court ruled in favor of a baker who refused to bake a wedding cake for a same-sex couple. For each tweet, decide whether its sentiment is Positive, Neutral, or Negative.',
+              examples = few_shot_examples,
+              template = 'Tweet: {text}\nSentiment: {label}')
+```
+
+Then we can `glue()` each tweet into the prompt and pass it as an input to `complete_prompt()`.
+
+```{r}
+TWEET <- "I am not happy about SCOTUS right now."
+
+glue(prompt)
+
+prompt |> 
+  glue() |> 
+  complete_prompt(model = 'davinci')
+```
+
+**Be mindful before you run this code.** At [current prices](https://openai.com/pricing), OpenAI will charge approximately 0.3 cents per prompt, for a total of $2.99 if you classify all 945 tweets.
+
+```{r, eval = FALSE}
+library(tidyverse)
+
+# create empty columns to hold sentiment scores
+scotus_tweets$positive <- NA
+scotus_tweets$negative <- NA
+scotus_tweets$neutral <- NA
+
+for(i in 1:nrow(scotus_tweets)){
+  
+  TWEET <- scotus_tweets$text[i]
+  
+  output <- prompt |> 
+    glue() |> 
+    complete_prompt(model = 'davinci')
+  
+  # sum the probabilities of positive, negative, and neutral from the returned probability vector
+  scotus_tweets$negative[i] <- output |> 
+    filter(str_detect(response, 'neg|Neg')) |> 
+    summarize(sum(prob))
+  
+  scotus_tweets$positive[i] <- output |> 
+    filter(str_detect(response, 'pos|Pos')) |> 
+    summarize(sum(prob))
+  
+  scotus_tweets$neutral[i] <- output |> 
+    filter(str_detect(response, 'neu|Neu')) |> 
+    summarize(sum(prob))
+  
+}
+```
+
+
+## Text To Data
+
+```{r}
+
+```
+
+## Practice Problems
+
+1. 
