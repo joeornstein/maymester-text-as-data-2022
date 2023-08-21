@@ -188,13 +188,15 @@ for(i in 1:nrow(scotus_tweets)){
 ## Text To Data
 
 ```{r}
-text <- "Jack and Jill went up the hill to fetch a pail of water. Jack fell down and broke his crown, revealing his stunning golden locks. Investigators on the scene were only able to recover Jack's shoes (size 10) and Jill's shoes (size 8)."
-
 instructions <- 'Create a data table based on the following passage. The table should include information on (1) the names of the characters, (2) their hair color, and (3) their shoe sizes. Use NA for missing information.'
 
+text <- "Jack and Jill went up the hill to fetch a pail of water. Jack fell down and broke his crown, revealing his stunning golden locks. Investigators on the scene were only able to recover Jack's shoes (size 10) and Jill's shoes (size 8)."
 
+parse_text(text = text,
+           instructions = instructions,
+           col_names = c('Name of Character', 'Hair Color', 'Shoe Size'))
 ```
 
 ## Practice Problems
 
-1. 
+1. In the [OCR practice problems](OCR.html), you got the text from page 4 of [SOJ.pdf](img/SOJ.pdf).
