@@ -84,39 +84,55 @@ This is particularly useful when including few-shot examples in the prompt. If y
 data(scotus_tweets) # the full dataset
 ```
 
-```{r}
-# TODO: get the right example dataframe in there.
-format_prompt(text = scotus_tweets$text[42],
-              instructions = 'Classify these tweets as Positive, Neutral, or Negative',
-              examples = scotus_tweets |> slice_sample(n=5),
-              template = 'Tweet: {text}\nSentiment: {label}')
-```
-
-This prompt can then be used as an input to `complete_prompt()`.
-
-```{r}
-format_prompt(text = scotus_tweets$text[42],
-              instructions = 'Classify these tweets as Positive, Neutral, or Negative',
-              examples = scotus_tweets_examples,
-              template = 'Tweet: {text}\nSentiment: {label}') |> 
-  complete_prompt(model = 'davinci')
-```
-
-Note that I am using the 'davinci' model variant, the original version of GPT-3 that was not......(TODO: how much do we want to say about RLHF?)
-
-
-
-## Classification Performance
-
-
 ```{r, echo = FALSE}
+library(tidyverse)
+
 # TODO TODO: Need to update the package with these example flags.
 scotus_tweets$few_shot_example <- as.numeric(scotus_tweets$tweet_id %in% c(
   '32117789_2018-06-05T02:04:20.000Z', '26730338_2018-06-04T16:12:13.000Z',
   '772279633060491264_2018-06-04T14:47:05.000Z', '236655360_2018-06-04T14:24:46.000Z', 
   '1478101897_2018-06-04T18:09:51.000Z', '21792408_2018-06-04T15:46:03.000Z'
 ))
+
+scotus_tweets_examples <- scotus_tweets |> 
+                filter(case == 'masterpiece', few_shot_example == 1) |> 
+                mutate(label = case_when(expert1 == 1 ~ 'Positive',
+                                         expert1 == 0 ~ 'Neutral',
+                                         expert1 == -1 ~ 'Negative')) |> 
+                select(text, label)
+
 ```
+
+```{r}
+library(tidyverse)
+library(glue)
+
+prompt <- format_prompt(text = '{TWEET}',
+              instructions = 'Classify these tweets as Positive, Neutral, or Negative.',
+              examples = scotus_tweets_examples,
+              template = 'Tweet: {text}\nSentiment: {label}')
+
+prompt
+
+```
+
+This prompt can then be used as an input to `complete_prompt()`.
+
+```{r}
+TWEET <- scotus_tweets$text[42]
+TWEET
+
+glue(prompt)
+
+prompt |> 
+  glue() |> 
+  complete_prompt(model = 'davinci')
+```
+
+Note that I am using the 'davinci' model variant, the original version of GPT-3 that was not......(TODO: how much do we want to say about RLHF?)
+
+
+## Classification Performance
 
 First, create our dataset of few-shot examples. These are six tweets that were unanimously coded by three human annotators as Positive, Negative, or Neutral (two per category).
 
@@ -184,8 +200,78 @@ for(i in 1:nrow(scotus_tweets)){
 }
 ```
 
+## Cleaning Up OCR
+
+In the [OCR tutorial](OCR.html), we worked with a newspaper clipping about the Titanic sinking. 
+
+```{r}
+library(tesseract)
+library(magick)
+library(text2data)
+
+image <- image_read('img/titanic.png')
+image
+```
+
+Let's focus on reading the first column. Notice that while the text quality is generally legible, there are a number of lines where the text is cut off or blurred.
+
+```{r}
+first_column <- image_crop(image,
+                           geometry = '336 x 660 + 0 + 0')
+
+first_column
+```
+
+Next, we'll see how well OCR can capture the text from that image.
+
+```{r}
+text <- ocr(first_column)
+
+cat(text)
+```
+
+As is common with OCR, the result is very good on the first pass, but not perfect. See, for example, the phrase "reused tu recusiiee ce" (instead of "refused to recognize the").
+
+```{r}
+cleaned_text <- clean_ocr(text)
+
+cat(cleaned_text)
+```
+
+**TODO**: Psych stuff from Text To Data.
 
 ## Text To Data
+
+With a well-formatted prompt, we can 
+
+```{r}
+prompt <- 'Create a data table from the following passage.\n---\nThe little dog laughed to see such fun, and the dish ran away with the spoon.\n---\nData Table:\nCharacter | What They Did \n---|---\n'
+
+cat(prompt)
+
+response <- complete_prompt(prompt, 
+                max_tokens = 100)
+
+response
+```
+
+The result (`response`), is a data table delimited by vertical bars, which we can then read into a data frame:
+
+```{r}
+df <- read_delim(response,
+                 delim = '|',
+                 col_names = FALSE)
+
+df
+```
+
+The `parse_text()` function puts all that together in a convenient interface.
+
+```{r}
+parse_text(instructions = 'Create a data table from the following passage.',
+           text = 'The little dog laughed to see such fun, and the dish ran away with the spoon.',
+           col_names = c('Character', 'What They Did'))
+```
 
 ```{r}
 instructions <- 'Create a data table based on the following passage. The table should include information on (1) the names of the characters, (2) their hair color, and (3) their shoe sizes. Use NA for missing information.'
@@ -199,4 +285,6 @@ parse_text(text = text,
 
 ## Practice Problems
 
-1. In the [OCR practice problems](OCR.html), you got the text from page 4 of [SOJ.pdf](img/SOJ.pdf).
+1. 
+
+2. Ask ChatGPT to summarize the remarks on pages 4-5 of the [PDF](img/SOJ.pdf) that you imported in the [OCR practice problems](OCR.html).
