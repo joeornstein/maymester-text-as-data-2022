@@ -34,7 +34,7 @@ df <- sotu::sotu_meta |>
          speech_id = 1:length(sotu::sotu_text)) |> 
   select(speech_id, president, year, text)
 
-df
+head(df)
 
 # split into sentences
 tidy_sotu <- df |> 
@@ -44,7 +44,7 @@ tidy_sotu <- df |>
   # keep only the sentences that contain the word stem "manufactu"
   filter(str_detect(sentence, 'manufactu'))
 
-tidy_sotu
+head(tidy_sotu)
 ```
 
 Notice that the `unnest_tokens()` function converts all the words to lower case. We now have a dataframe where the unit of analysis is the sentence, containing every sentence in State of the Union speeches from 1790 to 2016 that mentions the word "manufacturing".
@@ -61,7 +61,7 @@ tidy_sotu <- tidy_sotu |>
   # the manufacturing words themselves
   filter(str_detect(word, 'manufactu', negate = TRUE))
 
-tidy_sotu
+head(tidy_sotu)
 ```
 
 ## Step 3: Reduce Complexity
@@ -73,7 +73,7 @@ Because there are *so many* words in the English language, it can be advantageou
 tidy_sotu <- tidy_sotu |> 
   anti_join(get_stopwords())
 
-tidy_sotu
+head(tidy_sotu)
 ```
 
 Word stemming is available courtesy of the `SnoballC` package.
@@ -87,7 +87,7 @@ wordStem('duties')
 tidy_sotu <- tidy_sotu |> 
   mutate(word_stem = wordStem(word))
 
-tidy_sotu
+head(tidy_sotu)
 ```
 
 ## Step 4: Create the Document-Feature Matrix
