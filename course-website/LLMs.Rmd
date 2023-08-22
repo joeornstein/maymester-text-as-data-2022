@@ -78,10 +78,11 @@ format_prompt(text = 'I am feeling happy today.',
               template = 'Statement: {text}\nSentiment: {label}')
 ```
 
-This is particularly useful when including few-shot examples in the prompt. If you input these examples as a tidy dataframe, the `format_prompt()` function will paste them into the prompt them according to the template. To illustrate, we can classify a tweet from from the social media sentiment application. First, load the Supreme Court Tweets dataset, which is included with the package.
+This is particularly useful when including few-shot examples in the prompt. If you input these examples as a tidy dataframe with the columns `text` and `label`, the `format_prompt()` function will paste them into the prompt them according to the template. To illustrate, we can classify a tweet from from the social media sentiment application. First, load the Supreme Court Tweets dataset, which is included with the package.
 
 ```{r}
 data(scotus_tweets) # the full dataset
+data(scotus_tweets_examples) # a sample of labeled examples
 ```
 
 ```{r, echo = FALSE}
@@ -242,22 +243,24 @@ cat(cleaned_text)
 
 ## Text To Data
 
-With a well-formatted prompt, we can 
+One of the most labor-intensive tasks in a research workflow involves converting unstructured text to structured datasets. Traditionally, this is a task that has only been suitable for human research assistants, but with LLMs, a truly automated workflow is feasible. Consider the following prompt:
 
-```{r}
+```{r, echo = FALSE}
 prompt <- 'Create a data table from the following passage.\n---\nThe little dog laughed to see such fun, and the dish ran away with the spoon.\n---\nData Table:\nCharacter | What They Did \n---|---\n'
 
 cat(prompt)
+```
+
+When we submit this prompt to GPT-3, it yields a data table delimited by vertical bars, which can then be read into a dataframe.
+
+```{r}
+prompt <- 'Create a data table from the following passage.\n---\nThe little dog laughed to see such fun, and the dish ran away with the spoon.\n---\nData Table:\nCharacter | What They Did \n---|---\n'
 
 response <- complete_prompt(prompt, 
                 max_tokens = 100)
 
 response
-```
 
-The result (`response`), is a data table delimited by vertical bars, which we can then read into a data frame:
-
-```{r}
 df <- read_delim(response,
                  delim = '|',
                  col_names = FALSE)
@@ -265,13 +268,15 @@ df <- read_delim(response,
 df
 ```
 
-The `parse_text()` function puts all that together in a convenient interface.
+Formatting this sort of prompt by hand can be tedious and error-prone, so the `parse_text()` function puts all those steps together in a more convenient interface.
 
 ```{r}
 parse_text(instructions = 'Create a data table from the following passage.',
            text = 'The little dog laughed to see such fun, and the dish ran away with the spoon.',
            col_names = c('Character', 'What They Did'))
 ```
+
+As with classification, more detailed instructions typically yield better completions.
 
 ```{r}
 instructions <- 'Create a data table based on the following passage. The table should include information on (1) the names of the characters, (2) their hair color, and (3) their shoe sizes. Use NA for missing information.'
@@ -285,6 +290,6 @@ parse_text(text = text,
 
 ## Practice Problems
 
-1. 
+1. Take a sample of the Senate press releases from the [clustering tutorial](clustering.html). Format a few-shot GPT-3 prompt that returns a list of topics. Are the topic labels sensible? Are they similar to what we came up with using unsupervised methods?
 
-2. Ask ChatGPT to summarize the remarks on pages 4-5 of the [PDF](img/SOJ.pdf) that you imported in the [OCR practice problems](OCR.html).
+2. Ask GPT-3 to summarize the remarks on pages 4-5 of the [PDF](img/SOJ.pdf) that you imported in the [OCR practice problems](OCR.html).
