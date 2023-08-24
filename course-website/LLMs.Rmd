@@ -203,7 +203,7 @@ for(i in 1:nrow(scotus_tweets)){
 
 ## Cleaning Up OCR
 
-In the [OCR tutorial](OCR.html), we worked with a newspaper clipping about the Titanic sinking. 
+In the [OCR tutorial](OCR.html), we worked with a newspaper clipping about the sinking of the Titanic.
 
 ```{r}
 library(tesseract)
@@ -214,7 +214,7 @@ image <- image_read('img/titanic.png')
 image
 ```
 
-Let's focus on reading the first column. Notice that while the text quality is generally legible, there are a number of lines where the text is cut off or blurred.
+Let's focus for now on the first column.
 
 ```{r}
 first_column <- image_crop(image,
@@ -223,7 +223,9 @@ first_column <- image_crop(image,
 first_column
 ```
 
-Next, we'll see how well OCR can capture the text from that image.
+Though a human can easily read and interpret this text, converting the image to plain text is a non-trivial problem in the field of computer vision. Note that the text is slightly tilted in places, and some lines are squished or cut off. A smudge obscures some letters in the lower left corner.
+
+How well does OCR capture the text from that image?
 
 ```{r}
 text <- ocr(first_column)
@@ -231,15 +233,33 @@ text <- ocr(first_column)
 cat(text)
 ```
 
-As is common with OCR, the result is very good on the first pass, but not perfect. See, for example, the phrase "reused tu recusiiee ce" (instead of "refused to recognize the").
+As is common with OCR, the result is generally quite good, but not perfect. Notice, for example, the phrases "reused tu recusiiee ce", "lif¢-boats", and "Ti-,‘sanic's". Look closely at the letters in the image above to see how the OCR algorithm may have made those mistakes. When you consider the image letter-by-letter, ignoring the semantic context in which those letters are placed, it is easy to mistake some letters for others. But when humans read a passage like this, they're not reading it letter-by-letter. Instead, fluent readers learn to recognize whole words at a time, using their knowledge of the language to “predict” what the constituent letters of a word must be, even when they are difficult to make out on the page. In the same way, we can make use of the fact that GPT-3 is very good at predicting words in sequences to impute what the phrase "reused tu recusiiee ce" is likely to have been, given the context.
+
+To do so, we can prompt GPT-3 like so:
 
 ```{r}
-cleaned_text <- clean_ocr(text)
+prompt <- paste0(
+    'Create a copy of the following passage, correcting any OCR errors.\n---\nOriginal Passage:\n\n', 
+    text,
+    '\n---\nCorrected Passage:\n\n')
+
+cat(prompt)
+
+cleaned_text <- complete_prompt(
+  prompt = prompt,
+  max_tokens = nchar(text))
 
 cat(cleaned_text)
 ```
 
-**TODO**: Psych stuff from Text To Data.
+The resulting text is a nearly perfect transcription, despite the garbled inputs. The `text2data::clean_ocr()` function performs these steps in a single function call.
+
+```{r}
+# TODO TODO: use ChatGPT in this function
+cleaned_text <- clean_ocr(text)
+
+cat(cleaned_text)
+```
 
 ## Text To Data
 
