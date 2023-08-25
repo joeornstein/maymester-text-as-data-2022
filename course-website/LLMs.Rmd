@@ -1,7 +1,7 @@
 ---
 title: "Large Language Models (LLMs)"
 description: |
-  A dumb auto-complete model -- trained on the entire Internet -- can accomplish a remarkable number of tasks.
+  A dumb auto-complete model -- trained on the entire Internet -- can accomplish a remarkable number of tasks if you ask it nicely.
 bibliography: references.bib
 ---
 
@@ -9,11 +9,19 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-INTRO to LLMs and adaptation. Two blog posts I have found very helpful in explaining how they work without being overly technical. In nutshell, an LLM is trained to predict the next word in a sequence, trained on a massive quantity of language data scraped from the Internet. Words are represented with  [embeddings](word-embeddings.html), and a unique feature of the **transformer** model is that each word embedding is modified based on what words appear nearby (a process called **self-attention**). TODO: Do we need this? Or just point to the blog posts? 
+Large language models (LLMs) have radically changed the way computer scientists approach natural language processing over the past five years. These models are trained to predict the next word in a sequence, using a massive quantity of training data from the Internet and digitized books. In this tutorial, I will hand-wave over how exactly they perform this task, and focus instead on how to adapt these models for use in social science applications. If you are interested in the details of how LLMs work, I found the following two blog posts particularly helpful:  
 
-If you'd like to know more about how LLMs work, I strongly reccomend For our purposes here, it suffices to know that an LLM is a model that inputs a sequence of words and outputs a set of words that are most likely to follow that sequence. And if we have a model that is sufficiently good at that task, we can *adapt* it to perform all sorts of text-as-data tasks. To show you how, will use the `text2data` R package create LLM prompts and submit them to OpenAI's GPT-3.[^qualms] Let's start by getting that set up.
+- [The GPT-3 Architecture, on a Napkin](https://dugas.ch/artificial_curiosity/GPT_architecture.html)
 
-[^qualms]: I have qualms about using closed-source models for scientific research [@spirlingWhyOpensourceGenerative2023], but for the time being the ease-of-use and capabilities of OpenAI's models are sufficiently beyond those of similar open-source models that it makes sense to start here. I will update this page and the R package when I have identified a suitable open-source replacement.
+- [Large language models, explained with a minimum of math and jargon](https://www.understandingai.org/p/large-language-models-explained-with). 
+
+In nutshell, LLMs represent words using [embeddings](word-embeddings.html), and predict the most likely next word in a sequence using a model architecture called the **transformer**. A powerful feature of this type of model is that the embeddings representing the input sequence are iteratively updated based on what words appear nearby (a process called **self-attention**). This allows an LLM to flexibly represent words based on their context, so that it knows, for instance, the difference between 
+
+For our purposes here, it suffices to know that a **language model** is a model that predicts the most likely next word in a sequence of words. A **large** language model (LLM) is trained to perform this task using a massive corpus of data scraped from the Internet and digitized books. 
+
+If we have a model that is sufficiently good at that task, we can *adapt* it to perform all sorts of text-as-data tasks. To show you how, will use the `text2data` R package to create LLM prompts and submit them to OpenAI's GPT-3.[^qualms] Let's start by getting the R package set up.
+
+[^qualms]: Like many others, I have qualms about using closed-source models for scientific research [@spirlingWhyOpensourceGenerative2023], but as of summer 2023 the ease-of-use and capabilities of OpenAI's models are sufficiently beyond those of similar open-source models that it makes sense to start here. I will update both this page and the R package when I have identified a suitable set of open-source alternatives.
 
 
 ## Setting Up The `text2data` Package
@@ -55,7 +63,12 @@ complete_prompt(prompt = 'My favorite food is',
 
 For the moment, ?? (what did I want to write here?)
 
+
+
 Footnote: This version of the model is scheduled for [deprecation](https://platform.openai.com/docs/deprecations/) on January 4, 2024. After that date, use 'davinci-002'.
+
+NEXT: ADAPTATION
+
 
 ## Formatting Prompts
 
