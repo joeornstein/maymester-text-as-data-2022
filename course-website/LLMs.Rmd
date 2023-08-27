@@ -9,13 +9,13 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-Large language models (LLMs) have transformed the way computer scientists approach natural language processing over the past five years. These models are trained to predict the next word in a sequence, using a massive quantity of text data from the Internet and digitized books. In this tutorial, I will hand-wave over *how* exactly LLMs perform this task, focusing instead on how to adapt such models for use in social science applications. If you are interested in what goes on under-the-hood of an LLM, I highly recommend the following two blog posts for not-too-technical introdcutions:
+Large language models (LLMs) have transformed the way computer scientists approach natural language processing over the past five years. These models are designed to predict the next word in a sequence, and are trained to perform this task using a massive quantity of text data from the Internet and digitized books. In this tutorial, I will hand-wave over exactly *how* LLMs perform this task, focusing instead on how to adapt such models for use in social science applications. If you are interested in what's going on under the hood, I highly recommend the following two blog posts for not-too-technical introdcutions:
 
 -   [The GPT-3 Architecture, on a Napkin](https://dugas.ch/artificial_curiosity/GPT_architecture.html)
 
 -   [Large language models, explained with a minimum of math and jargon](https://www.understandingai.org/p/large-language-models-explained-with).
 
-In a nutshell, LLMs represent words using [embeddings](word-embeddings.html), predicting the most likely next word in a sequence using a model architecture called the **transformer** [@vaswaniAttentionAllYou2017]. A powerful feature of this type of model is that the embeddings representing the input sequence are iteratively updated based on which words appear nearby (a process called **self-attention**). This allows an LLM to flexibly represent words based on their context, which is useful in cases where the same word can mean different things in different contexts. For example, an LLM will represent the word "bill" differently depending on whether it appears in the phrase "sign the bill", "foot the bill", or "Hillary and Bill".
+In a nutshell, LLMs represent words using [embeddings](word-embeddings.html), predicting the most likely next word in a sequence using a model architecture called the **transformer** [@vaswaniAttentionAllYou2017]. A powerful feature of this type of model is that the embeddings representing the input sequence are iteratively updated based on which words appear nearby (a process called **self-attention**). This allows an LLM to flexibly represent words based on their context, which is useful in cases where the same word can mean different things in different contexts. For example, an LLM will represent the word "bill" differently depending on whether it appears in the phrase "sign the bill", "foot the bill", or "Hillary and Bill", which permits more accurate next-word prediction.
 
 What's remarkable is that if we have a model that is sufficiently good at predicting the next word in a sequence, we can *adapt* it to perform all sorts of text-as-data tasks, by creating a prompt that converts our desired task into a next-word prediction problem [@ornsteinHowTrainYour2022]. To show you how, we will use the `text2data` R package to create LLM prompts and submit them to OpenAI's GPT-3.[^1] Let's start by getting the R package set up.
 
@@ -53,14 +53,14 @@ library(text2data)
 complete_prompt(prompt = 'My favorite food is')
 ```
 
-If you prefer the model to auto-regressively generate text instead of outputting the next-word probabilities, set the `max_tokens` argument greater than 1. The function will return a character object with the most likely completion at each point in the sequence.
+If you prefer the model to auto-regressively generate sequences of text instead of outputting the next-word probabilities, set the `max_tokens` argument greater than 1. The function will return a character object with the most likely completion at each point in the sequence.
 
 ```{r}
 complete_prompt(prompt = 'My favorite food is', 
-                max_tokens = 24)
+                max_tokens = 6)
 ```
 
-If we want GPT-3 to perform a classification task, we can structure the prompt so that the next-word prediction is the classification we want (a process called **adaptation**).
+If we want GPT-3 to perform a classification task, we can structure the prompt so that the best next-word prediction is the classification we want (a process called **adaptation**). Consider, for example, the following prompt.
 
 ```{r}
 prompt <- 'Decide whether the following statement is happy, sad, or neither.\n\nText: I feel happy.\nClassification:'
@@ -69,6 +69,8 @@ cat(prompt)
 
 complete_prompt(prompt)
 ```
+
+The result is a probability vector with the most likely completions. The correct classification -- happy -- is assigned the highest probability. (Though note that some post-processing is necessary to combine the "happy" and "Happy" responses.)
 
 A **few-shot prompt** includes several completed examples in the text of the prompt to demonstrate the desired output. Prompts structured this way tend perform significantly better than zero-shot prompts with no examples [@brownLanguageModelsAre2020].
 
@@ -101,14 +103,14 @@ format_prompt(text = 'I am feeling happy today.',
               template = 'Statement: {text}\nSentiment: {label}')
 ```
 
-This is particularly useful when including few-shot examples in the prompt. If you input these examples as a tidy dataframe with the columns `text` and `label`, the `format_prompt()` function will paste them into the prompt them according to the template. To illustrate, let's classify the sentiment of a set of tweets about the Supreme Court of the United States. First, let's load the dataset, which is included with the `text2data` package.
+This is particularly useful when including few-shot examples in the prompt. If you input these examples as a tidy dataframe with the columns `text` and `label`, the `format_prompt()` function will paste them into the prompt them according to the template. To illustrate, let's classify the sentiment of a set of tweets about the Supreme Court of the United States, a dataset which is included with the `text2data` package.
 
 ```{r}
 data(scotus_tweets) # the full dataset
 data(scotus_tweets_examples) # a sample of labeled examples
 ```
 
-Next, we can format our prompt template using `format_prompt()`.
+We can format our few-shot prompt template using `format_prompt()`, leaving the `{TWEET}` placeholder for the text we want to classify:
 
 ```{r}
 library(tidyverse)
@@ -132,7 +134,7 @@ TWEET
 glue(prompt)
 ```
 
-We can then pipe that prompt into `complete_prompt()`:
+We can then pipe that prompt into `complete_prompt()` to get the desired classification:
 
 ```{r}
 prompt |> 
@@ -142,7 +144,9 @@ prompt |>
 
 ## Classification Performance
 
-First, create our dataset of few-shot examples. These are six tweets that were unanimously coded by three human annotators as Positive, Negative, or Neutral (two per category).
+TODO:
+
+Is this approach any good? To see First, create our dataset of few-shot examples. These are six tweets that were unanimously coded by three human annotators as Positive, Negative, or Neutral (two per category).
 
 ```{r}
 few_shot_examples <- scotus_tweets |> 
@@ -245,6 +249,7 @@ As is common with OCR, the result is generally quite good, but not perfect. Noti
 To do so, we can prompt GPT-3 like so:
 
 ```{r}
+# TODO: make a ChatGPT version of complete_prompt()
 prompt <- paste0(
     'Create a copy of the following passage, correcting any OCR errors.\n---\nOriginal Passage:\n\n', 
     text,
