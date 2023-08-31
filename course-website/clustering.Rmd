@@ -186,19 +186,18 @@ When documents are as brief as these press releases, one could potentially repre
 Let's give it a try, shall we? First, get the word embeddings from the `textdata` package.
 
 ```{r}
-library(textdata)
-
 # get the glove embedding vectors
-glove <- embedding_glove6b(dimensions = 100)
+glove <- read_table("data/glove.6B/glove.6B.100d.txt", 
+                    col_names = FALSE)
 
 # convert to a matrix (it will make the computation easier)
-glove_tokens <- glove$token
+vocab <- glove$X1
 
 glove <- glove |>
-  select(-token) |>
+  select(X2:X101) |>
   as.matrix()
 
-rownames(glove) <- glove_tokens
+rownames(glove) <- vocab
 
 glove[100:120,1:3]
 ```
@@ -221,7 +220,7 @@ tidy_press_releases <- df |>
   # remove numerals
   filter(str_detect(word, '[0-9]', negate = TRUE)) |>
   # remove the words that aren't in the glove lexicon
-  filter(word %in% glove_tokens)
+  filter(word %in% vocab)
 ```
 
 Next, compute the average word embedding of each word in the document. I'm going to do it with a `for` loop, because I can't think of a more elegant solution.
