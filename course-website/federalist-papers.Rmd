@@ -11,16 +11,44 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 
 A great entry point for modeling text as data is the now classic problem of guessing who wrote 15 disputed Federalist Papers [@mostellerInferenceDisputedAuthorship1964]. To do so, we'll look at the distribution of words that Hamilton, Madison, and Jay tend to write and try to detect their stylistic patterns in the disputed texts. We'll use two approaches, outlined in @grimmerTextDataNew2021 Chapters 6 and 7: the multinomial model and the vector space model.
 
+## Get The Data
+
+We'll start by [scraping](webscraping.html) the Federalist Paper corpus from Project Gutenberg.
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(rvest)
+
+# read the raw HTML
+page <- read_html('https://www.gutenberg.org/cache/epub/18/pg18-images.html')
+
+# get all the chapters
+chapters <- html_elements(page, '.chapter')
+
+# get just the text from each chapter
+text <- html_text2(chapters)
+
+d <- tibble(text)
+
+# get rid of the slightly different version of Federalist 70
+d <- d |>
+  filter(str_detect(text, 'slightly different version', negate = TRUE))
+
+# create a column for the title and attributed author
+d <- d |>
+  mutate(author = text |>
+           str_extract('HAMILTON AND MADISON|HAMILTON OR MADISON|HAMILTON|MADISON|JAY') |>
+           str_to_title(),
+         title = str_extract(text, 'No. [A-Z].*'))
+```
+
 ## Multinomial Model
 
 To motivate this model, suppose that each author owns a literal bag of words. When they are writing, they randomly draw each word from the bag, replacing it when they're done writing it down. Evidently, Alexander Hamilton's word bag has a *lot* of the word "upon".
 
 ```{r}
-library(tidyverse)
-library(tidytext)
-library(wordcloud2)
-
-tidy_federalist <- corpus::federalist |> 
+tidy_federalist <- d |> 
   # tokenize to the word level
   unnest_tokens(input = 'text',
                 output = 'word')
@@ -31,8 +59,10 @@ interesting_words <- c('although', 'always',
                      'considerable', 'heretofore', 
                      'upon', 'whilst')
 
-tidy_federalist <-filter(tidy_federalist,
-                         word %in% interesting_words)
+tidy_federalist <- filter(tidy_federalist,
+                          word %in% interesting_words)
+
+library(wordcloud2)
 
 tidy_federalist |> 
   filter(author == 'Hamilton') |> 
@@ -54,7 +84,7 @@ Obviously this model leaves out a lot of detail about how authors actually write
 
 ```{r}
 tidy_federalist |> 
-  filter(name == 'Federalist No. 18') |> 
+  filter(title == 'No. XVIII.') |> 
   count(word)
 ```
 
@@ -99,7 +129,7 @@ jay_vector
 # now get the vector for Federalist No. 18
 fed18_vector <- tidy_federalist |>
   mutate(word = factor(word)) |> 
-  filter(name == 'Federalist No. 18') |>
+  filter(title == 'No. XVIII.') |>
   count(word, .drop = FALSE) |>
   pull(n) |>
   # add names to make the vector more readable
@@ -172,7 +202,7 @@ For the validation test, we'll repeat the same steps as before, except we hold o
 # get the Federalist 10 word count vector
 fed10_vector <- tidy_federalist |>
   mutate(word = factor(word)) |> 
-  filter(name == 'Federalist No. 10') |>
+  filter(title == 'No. X.') |>
   count(word, .drop = FALSE) |>
   pull(n) |>
   # add names to make the vector more readable
@@ -183,7 +213,7 @@ fed10_vector
 # Recompute Madison's word count vector, omitting Federalist 10
 madison_vector <- tidy_federalist |> 
   mutate(word = factor(word)) |> 
-  filter(name != 'Federalist No. 10',
+  filter(title != 'No. X.',
          author == 'Madison') |> 
   count(word, .drop = FALSE) |> 
   pull(n) |> 
@@ -220,7 +250,7 @@ all_stopwords <- union(mw1964_words, get_stopwords()$word)
 This yields a list of 186 potential words. Next, we'll count up how frequently each author used each word, keeping only the words that one author used three times more frequently than another auhor (the number three is arbitrary, but as we'll see it yields a manageable list of distinctive words).
 
 ```{r}
-tidy_federalist <- corpus::federalist |>
+tidy_federalist <- d |>
   # tokenize to the word level
   unnest_tokens(input = 'text',
                 output = 'word') |>
@@ -268,7 +298,7 @@ tidy_federalist <-
 
 # compute the new Federalist 10 vector
 fed10_vector <- tidy_federalist |>
-  filter(name == 'Federalist No. 10') |>
+  filter(title == 'No. X.') |>
   count(word, .drop = FALSE) |>
   pull(n) |>
   # add names to make the vector more readable
@@ -278,7 +308,7 @@ fed10_vector
 
 # get word count vectors for each author
 madison_vector <- tidy_federalist |> 
-  filter(name != 'Federalist No. 10',
+  filter(title != 'No. X.',
          author == 'Madison') |> 
   count(word, .drop = FALSE) |> 
   pull(n) |> 
