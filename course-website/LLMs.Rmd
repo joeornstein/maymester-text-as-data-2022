@@ -9,7 +9,7 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-Large language models (LLMs) have transformed the way computer scientists approach natural language processing over the past five years. These models are designed to predict the next word in a sequence, and are trained to perform this task using a massive quantity of text data from the Internet and digitized books. In this tutorial, I will hand-wave over exactly *how* LLMs perform this task, focusing instead on how to adapt such models for use in social science applications. If you are interested in what's going on under the hood, I highly recommend the following two blog posts for not-too-technical introdcutions:
+Large language models (LLMs) have transformed the way computer scientists approach natural language processing over the past five years. These models are designed to predict the next word in a sequence, and are trained to perform this task using a massive quantity of text data from the Internet and digitized books. In this tutorial, I will hand-wave over exactly *how* LLMs perform this task, focusing instead on how to adapt such models for use in social science applications. If you are interested in what's going on under the hood, I highly recommend the following two blog posts for not-too-technical introductions:
 
 -   [The GPT-3 Architecture, on a Napkin](https://dugas.ch/artificial_curiosity/GPT_architecture.html)
 
@@ -134,7 +134,7 @@ TWEET
 glue(prompt)
 ```
 
-We can then pipe that prompt into `complete_prompt()` to get the desired classification:
+We can then pipe that prompt into `complete_prompt()` to output the desired classification:
 
 ```{r}
 prompt |> 
@@ -142,75 +142,7 @@ prompt |>
   complete_prompt()
 ```
 
-## Classification Performance
 
-TODO:
-
-Is this approach any good? To see First, create our dataset of few-shot examples. These are six tweets that were unanimously coded by three human annotators as Positive, Negative, or Neutral (two per category).
-
-```{r}
-few_shot_examples <- scotus_tweets |> 
-                filter(case == 'masterpiece', few_shot_example == 1) |> 
-                mutate(label = case_when(expert1 == 1 ~ 'Positive',
-                                         expert1 == 0 ~ 'Neutral',
-                                         expert1 == -1 ~ 'Negative')) |> 
-                select(text, label)
-```
-
-We can use the `format_prompt()` to create the prompt template with a placeholder for the tweet.
-
-```{r}
-prompt <- format_prompt(text = '{TWEET}',
-              instructions = 'Read these tweets posted the day after the US Supreme Court ruled in favor of a baker who refused to bake a wedding cake for a same-sex couple. For each tweet, decide whether its sentiment is Positive, Neutral, or Negative.',
-              examples = few_shot_examples,
-              template = 'Tweet: {text}\nSentiment: {label}')
-```
-
-Then we can `glue()` each tweet into the prompt and pass it as an input to `complete_prompt()`.
-
-```{r}
-TWEET <- "I am not happy about SCOTUS right now."
-
-glue(prompt)
-
-prompt |> 
-  glue() |> 
-  complete_prompt(model = 'davinci')
-```
-
-**Be mindful before you run this code.** At [current prices](https://openai.com/pricing), OpenAI will charge approximately 0.07 cents per prompt, for a total of \$0.65 if you classify all 945 tweets.
-
-```{r, eval = FALSE}
-library(tidyverse)
-
-# create empty columns to hold sentiment scores
-scotus_tweets$positive <- NA
-scotus_tweets$negative <- NA
-scotus_tweets$neutral <- NA
-
-for(i in 1:nrow(scotus_tweets)){
-  
-  TWEET <- scotus_tweets$text[i]
-  
-  output <- prompt |> 
-    glue() |> 
-    complete_prompt()
-  
-  # sum the probabilities of positive, negative, and neutral from the returned probability vector
-  scotus_tweets$negative[i] <- output |> 
-    filter(str_detect(response, 'neg|Neg')) |> 
-    summarize(sum(prob))
-  
-  scotus_tweets$positive[i] <- output |> 
-    filter(str_detect(response, 'pos|Pos')) |> 
-    summarize(sum(prob))
-  
-  scotus_tweets$neutral[i] <- output |> 
-    filter(str_detect(response, 'neu|Neu')) |> 
-    summarize(sum(prob))
-  
-}
-```
 
 ## Cleaning Up OCR
 
@@ -249,17 +181,15 @@ As is common with OCR, the result is generally quite good, but not perfect. Noti
 To do so, we can prompt GPT-3 like so:
 
 ```{r}
-# TODO: make a ChatGPT version of complete_prompt()
-prompt <- paste0(
-    'Create a copy of the following passage, correcting any OCR errors.\n---\nOriginal Passage:\n\n', 
-    text,
-    '\n---\nCorrected Passage:\n\n')
+prompt <- glue(
+    'Create a copy of the following passage, correcting any OCR errors.\n---\nOriginal Passage:\n\n{text}\n---\nCorrected Passage:\n\n')
 
 cat(prompt)
 
 cleaned_text <- complete_prompt(
   prompt = prompt,
-  max_tokens = nchar(text))
+  max_tokens = nchar(text),
+  model = 'gpt-3.5-turbo')
 
 cat(cleaned_text)
 ```
@@ -267,7 +197,6 @@ cat(cleaned_text)
 The resulting text is a nearly perfect transcription, despite the garbled inputs. The `text2data::clean_ocr()` function performs these steps in a single function call.
 
 ```{r}
-# TODO TODO: use ChatGPT in this function
 cleaned_text <- clean_ocr(text)
 
 cat(cleaned_text)
@@ -283,13 +212,14 @@ prompt <- 'Create a data table from the following passage.\n---\nThe little dog 
 cat(prompt)
 ```
 
-When we submit this prompt to GPT-3, it yields a data table delimited by vertical bars, which can then be read into a dataframe.
+When we submit this prompt to ChatGPT, it yields a data table delimited by vertical bars, which can then be read into a dataframe.
 
 ```{r}
 prompt <- 'Create a data table from the following passage.\n---\nThe little dog laughed to see such fun, and the dish ran away with the spoon.\n---\nData Table:\nCharacter | What They Did \n---|---\n'
 
 response <- complete_prompt(prompt, 
-                max_tokens = 100)
+                            max_tokens = 100,
+                            model = 'gpt-3.5-turbo')
 
 response
 
