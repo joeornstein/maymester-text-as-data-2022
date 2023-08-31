@@ -9,67 +9,82 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-Often, we'd like to not only count the frequency of words, but also get a sense of what the words *mean*. In a [bag of words representation](bag-of-words.html), we treat words words like "president" and "executive" as separate indices in a word count vector, implicitly assuming that they have completely unique meanings. But the statistical models we use to understand text data will perform better if words with similar meaning have similar representations. That is the purpose of the word embeddings approach, which represents each word as a vector, encoding the fact that "president" and "executive" have some overlapping meaning by placing their vectors close together.
-
 ```{r, echo = FALSE}
 knitr::include_graphics('img/morpheus.jpg')
 ```
 
-The `textdata` package is a useful interface for downloading pre-trained word embeddings like GloVe. These off-the-shelf word embeddings tend to do a pretty good job at capturing meaning, even for political science specific applications [@rodriguezWordEmbeddingsWhat2021].
+Often, we'd like to not only count the frequency of words, but also get a sense of what the words *mean*. In a [bag of words representation](bag-of-words.html), we treat words words like "president" and "executive" as separate indices in a word count vector, implicitly assuming that they have completely unique meanings. But the statistical models we use to understand text data will perform better if words with similar meaning have similar representations. That is the purpose of the word embeddings approach, which represents each word as a vector, encoding the fact that "president" and "executive" have some overlapping meaning by placing their vectors close together.
+
+In this exercise, we'll work with a set of pre-trained word embeddings called [GloVe](https://nlp.stanford.edu/projects/glove/). These off-the-shelf word embeddings tend to do a pretty good job at capturing meaning, even for political science specific applications [@rodriguezWordEmbeddingsWhat2021].[^federalist]
+
+[^federalist]: See `code/03_word-embeddings/federalist-embeddings.R` if you are interested in how to train word embeddings on your own corpus.
 
 ```{r}
 library(tidyverse)
 library(tidytext)
-library(textdata)
+library(text2vec)
 ```
 
-For expository purposes, let's just get 400,000 of the 100-dimensional word embeddings:
-
-```{r, cache = TRUE}
-glove <- embedding_glove6b(dimensions = 100)
-```
-
-This comes to us as a matrix, but we can pivot it into a tidy dataframe.
+For expository purposes, let's download the 100-dimensional word embeddings [here](https://nlp.stanford.edu/data/glove.6B.zip). That link downloads a zipped folder called 'glove.6B/'. Unzip it and make sure it is in your 'data/' folder.
 
 ```{r}
-tidy_glove <- glove |>
-  pivot_longer(contains("d"),
-               names_to = "dimension")
-
-tidy_glove
+glove <- read_table("data/glove.6B/glove.6B.100d.txt", 
+                    col_names = FALSE)
 ```
 
-It's difficult to visualize and interpret a 100-dimensional vector space, but we can explore which words have the highest cosine similarity. By looking at a word's "nearest neighbors", we can get a sense of the meaning that GloVe is assigning to it. The following function, adapted from [Emil Hvitfeldt and Julia Silge](https://smltar.com/embeddings.html), performs that computation.
+Converting this dataframe to a matrix object makes mathematical operations *much* faster.
 
 ```{r}
-library(widyr)
-nearest_neighbors <- function(df, token) {
-  df |>
-    rename(item1 = token) |>
-    widely(
-      ~ {
-        y <- .[rep(token, nrow(.)), ]
-        res <- rowSums(. * y) /
-          (sqrt(rowSums(. ^ 2)) * sqrt(sum(.[token, ] ^ 2)))
-        matrix(res, ncol = 1, dimnames = list(x = names(res)))
-      },
-      sort = TRUE,
-      maximum_size = NULL
-    )(item1, dimension, value) %>%
-    select(-item2)
+vocab <- glove$X1
+
+glove <- glove |>
+  select(X2:X101) |>
+  as.matrix()
+
+rownames(glove) <- vocab
+```
+
+It's difficult to visualize and interpret a 100-dimensional vector space, but we can explore which words have similar meaning by looking at their cosine similarity. 
+
+```{r}
+# define cosine similarity
+cosine_similarity <- function(x1, x2){
+  sum(x1*x2) / sqrt(sum(x1^2)) / sqrt(sum(x2^2))
+}
+
+cosine_similarity(glove['president',], 
+                  glove['executive',])
+
+cosine_similarity(glove['president',], 
+                  glove['legislative',])
+
+cosine_similarity(glove['president',], 
+                  glove['judicial',])
+```
+
+By looking at a word's "nearest neighbors" in GLoVe-space, we can get a sense of its meaning. The following function, adapted from [Emil Hvitfeldt and Julia Silge](https://smltar.com/embeddings.html), performs that computation.
+
+```{r}
+nearest_glove_neighbors <- function(word, n = 100){
+  sim2(x = glove,
+     y = glove[word, , drop = FALSE],
+     method = 'cosine',
+     norm = 'l2')[,1] |>
+  sort(decreasing = TRUE) |>
+  head(n)
 }
 ```
 
 What words are most closely associated with the word "democracy"?
 
 ```{r, cache = TRUE}
-nearest_neighbors(tidy_glove, 'democracy')
+nearest_glove_neighbors('democracy')
 ```
 
 ## Practice Problems
 
 1.  Explore some of the stereotypes reflected in the GloVe embeddings. How close is the word "professor" to female names compared to male names? Hispanic names?
-2.  What about words that are ambiguous without context, like "bill" or "share"?
+2.  What about words that are ambiguous without context, like "bill" or "share"? What are their nearest neighbors?
 
 ## Further Reading
 
