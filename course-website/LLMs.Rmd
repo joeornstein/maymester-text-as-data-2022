@@ -167,6 +167,8 @@ format_prompt(text = 'I am feeling happy today.',
 
 This is particularly useful when including few-shot examples in the prompt. If you input these examples as a tidy dataframe with the columns `text` and `label`, the `format_prompt()` function will paste them into the prompt them according to the template. To illustrate, let's classify the sentiment of a set of tweets about the Supreme Court of the United States, a dataset which is included with the `text2data` package.
 
+## Classifying Documents
+
 ```{r}
 data(scotus_tweets) # the full dataset
 data(scotus_tweets_examples) # a sample of labeled examples
@@ -218,6 +220,102 @@ load('data/gpt-3-outputs/scotus1.RData')
 scotus1
 ```
 
+## Classifiation Performance
+
+As we saw in the [sentiment analysis](sentiment-analysis.html) tutorial, conventional methods for classifying sentiment perform pretty poorly on text from social media. Does this approach perform any better? Too find out, let's run the prompt for each of the tweets in the `scotus_tweets` dataframe related to the Masterpiece Cakeshop ruling, create a measure of sentiment, and compare it against the human coders.
+
+First, create our prompt template with `format_prompt()`, this time with a bit more detail in the instructions. For few-shot examples, we'll use the 'masterpiece' tweets in `scotus_tweets_examples`. These are six tweets that were unanimously coded by three human annotators as Positive, Negative, or Neutral (two per category).
+
+```{r}
+prompt <- format_prompt(text = '{TWEET}',
+              instructions = 'Read these tweets posted the day after the US Supreme Court ruled in favor of a baker who refused to bake a wedding cake for a same-sex couple. For each tweet, decide whether its sentiment is Positive, Neutral, or Negative.',
+              examples = scotus_tweets_examples |> 
+                filter(case == 'masterpiece'),
+              template = 'Tweet: {text}\nSentiment: {label}')
+
+cat(prompt)
+```
+
+Next, we'll create a function that takes the dataframe of next-word predictions from GPT-3 and converts it into a measure of sentiment. For this tutorial, our measure will be $P(\text{positive}) - P(\text{negative})$.
+
+```{r}
+gpt3_sentiment_score <- function(df){
+  
+  p_positive <- df |> 
+    # put responses in all caps
+    mutate(response = str_to_upper(response)) |> 
+    # keep and sum probabilities assigned to "POS"
+    filter(str_detect(response, 'POS')) |> 
+    pull(prob) |> 
+    sum()
+  
+  p_negative <- df |> 
+    # put responses in all caps
+    mutate(response = str_to_upper(response)) |> 
+    # keep and sum probabilities assigned to "NEG"
+    filter(str_detect(response, 'NEG')) |> 
+    pull(prob) |> 
+    sum()
+  
+  return(p_positive - p_negative)
+}
+```
+
+We can add this function to the end of the pipeline we developed before.
+
+```{r, echo = TRUE, eval = FALSE}
+prompt |> 
+  glue() |> 
+  complete_prompt() |> 
+  gpt3_sentiment_score()
+```
+
+```{r, echo = FALSE, eval = FALSE}
+full_pipe <- prompt |> 
+  glue() |> 
+  complete_prompt() |> 
+  gpt3_sentiment_score()
+
+save(full_pipe, file = 'data/gpt-3-outputs/full_pipe.RData')
+```
+
+```{r, echo = FALSE, eval=TRUE}
+load('data/gpt-3-outputs/full_pipe.RData')
+
+full_pipe
+```
+
+With these elements in place, let's loop through the `scotus_tweets` dataset and estimate sentiment scores for each tweet referencing Masterpiece Cakeshop. **Be mindful before you run this code.** At [current prices](https://openai.com/pricing), OpenAI will charge approximately 0.07 cents per prompt, for a total of $0.65 if you classify all 945 tweets.
+
+```{r, echo = TRUE, eval = FALSE}
+scotus_tweets$gpt3_sentiment <- NA
+
+for(i in 1:nrow(scotus_tweets)){
+  
+  # skip the non-masterpiece tweets
+  if(scotus_tweets$case[i] != 'masterpiece'){
+    next
+  }
+  
+  # get the tweet text
+  TWEET <- scotus_tweets$text[i]
+  
+  # format the prompt, send it to GPT-3, and construct the sentiment measure 
+  scotus_tweets$gpt3_sentiment[i] <- prompt |> 
+    glue() |> 
+    complete_prompt() |> 
+    gpt3_sentiment_score()
+  
+}
+```
+
+```{r, echo = FALSE, eval = FALSE}
+save(scotus_tweets, file = 'data/gpt-3-outputs/scotus_classified.RData')
+```
+
+```{r, echo = FALSE, eval = TRUE}
+load('data/gpt-3-outputs/scotus_classified.RData')
+```
 
 ## Cleaning Up OCR
 
