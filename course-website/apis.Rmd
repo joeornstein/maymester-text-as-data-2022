@@ -208,13 +208,13 @@ Setup is done! Let's play.
 
 Suppose we want the transcript of this YouTube video:
 
-```{r}
-knitr::include_url('https://www.youtube.com/watch?v=mLyOj_QD4a4')
+```{r, echo = FALSE}
+knitr::include_url('https://www.youtube.com/embed/mLyOj_QD4a4?si=K6GPbav85zny_OeB')
 ```
 
-Note that the quality of these auto-generated transcripts can vary significantly, depending on audio quality. You can click the CC button in the bottom right of the video to get a sense of the quality of the closed captions.
+You can click the CC button in the bottom right of the video to see YouTube's auto-generated transcript. Note that the quality of these transcripts can vary significantly, depending on the quality of the audio. 
 
-To get the transcript of this video, we'll need the video ID, which you can find at the end of the video's URL (e.g. the bolded text here):
+To get the transcript using `R`, we'll need the video ID, which you can find at the end of the video's URL (the bolded text here):
 
 https://www.youtube.com/watch?v=**mLyOj_QD4a4**
 
@@ -290,20 +290,18 @@ Notice that I've written this function with two inputs: the video ID and an opti
 To verify that the function works, let's pull the transcript of the [2023 State of the Union Address](https://www.youtube.com/watch?v=gzcBTUvVp7M).
 
 ```{r}
-knitr::include_url('https://www.youtube.com/watch?v=gzcBTUvVp7M')
-```
-
-```{r}
 sotu_transcript <- get_youtube_transcript(video_id = 'gzcBTUvVp7M')
 
-substr(sotu_transcript, 1, 1000)
+sotu_transcript |> 
+  substr(1, 1000) |> 
+  cat()
 ```
 
 ## Practice Problems
 
 1. Get the full text of the [Patient Protection and Affordable Care Act (2010)](https://www.congress.gov/bill/111th-congress/house-bill/3590).
 
-2. Using the `get_bill_text()` function we created, create a dataframe where each row is a bill, and include columns for `congress`, `billType`, `billNumber`, and `full_text`. Collect the full text for at least 10 bills.
+2. Create a dataframe with information on several Congressional bills, including columns for `congress`, `billType`, `billNumber`, and `full_text`. Using the `get_bill_text()` function we created, collect the full text for at least 10 bills in this dataframe.
 
 3. Create a function to get the Congressional Research Service's *summary* of a bill from the congress.gov API. You'll need to check the documentation to figure out how to format the URL for the correct API endpoint.
 

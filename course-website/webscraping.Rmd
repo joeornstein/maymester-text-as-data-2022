@@ -14,7 +14,7 @@ For example, suppose for some reason I wanted to know what Tucker Carlson said o
 
 ## The `rvest` package
 
-As of writing (May 2022), the most user-friendly `R` package for getting text data from web pages is [`rvest`](https://rvest.tidyverse.org/index.html) (read that name like "harvest", as in harvesting data).
+As of writing, the most user-friendly `R` package for getting text data from web pages is [`rvest`](https://rvest.tidyverse.org/index.html) (read that name like "harvest", as in harvesting data).
 
 Let's begin by loading that package.
 
@@ -60,11 +60,11 @@ If you, like me, do not have a deep knowledge of HTML tags and CSS selectors tha
 knitr::include_graphics('img/SelectorGadget.png')
 ```
 
-If we use the SelectorGadget on our webpage here, highlighting the elements we want in green and the elements we *don't* want in red, it tells us to use the selector `.speakable:nth-child(6)`. Here's what that complete pipeline looks like:
+If we use the SelectorGadget on our webpage here, highlighting the elements we want in green and the elements we *don't* want in red, it tells us to use the selector `.speakable:nth-child(5)`. Here's what that complete pipeline looks like:
 
 ```{r}
 text <- page |> 
-  html_elements('.speakable:nth-child(6)') |> 
+  html_elements('.speakable:nth-child(5)') |> 
   html_text()
   
 text

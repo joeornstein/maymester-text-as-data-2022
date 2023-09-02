@@ -1,5 +1,5 @@
 ---
-title: "Large Language Models (LLMs)"
+title: "Large Language Models"
 description: |
   A dumb auto-complete model -- trained on the entire Internet -- can accomplish a remarkable number of tasks if you ask it nicely.
 bibliography: references.bib
@@ -9,17 +9,17 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-Large language models (LLMs) have transformed the way computer scientists approach natural language processing over the past five years. These models are designed to predict the next word in a sequence, and are trained to perform this task using a massive quantity of text data from the Internet and digitized books. In this tutorial, I will hand-wave over exactly *how* LLMs perform this task, focusing instead on how to adapt such models for use in social science applications. If you are interested in what's going on under the hood, I highly recommend the following two blog posts for not-too-technical introductions:
+Large language models (LLMs) have transformed the way computer scientists approach natural language processing over the past five years. These models, trained to predict the next word in a sequence, make use of a massive quantity of text data from the Internet and digitized books. In this tutorial, I will hand-wave over exactly *how* LLMs perform this task, focusing instead on how to adapt such models for use in social science applications. If you are interested in what's going on under the hood, I highly recommend the following two blog posts for not-too-technical introductions:
 
 -   [The GPT-3 Architecture, on a Napkin](https://dugas.ch/artificial_curiosity/GPT_architecture.html)
 
 -   [Large language models, explained with a minimum of math and jargon](https://www.understandingai.org/p/large-language-models-explained-with).
 
-In a nutshell, LLMs represent words using [embeddings](word-embeddings.html), predicting the most likely next word in a sequence using a model architecture called the **transformer** [@vaswaniAttentionAllYou2017]. A powerful feature of this type of model is that the embeddings representing the input sequence are iteratively updated based on which words appear nearby (a process called **self-attention**). This allows an LLM to flexibly represent words based on their context, which is useful in cases where the same word can mean different things in different contexts. For example, an LLM will represent the word "bill" differently depending on whether it appears in the phrase "sign the bill", "foot the bill", or "Hillary and Bill", which permits more accurate next-word prediction.
+In a nutshell, LLMs represent words using [embeddings](word-embeddings.html), and are trained to predict the most likely next word in a sequence using a model architecture called the **transformer** [@vaswaniAttentionAllYou2017]. A powerful feature of this type of model is that the embeddings representing the input sequence are iteratively updated based on which words appear nearby (a process called **self-attention**). This allows an LLM to flexibly represent words based on their context, which is useful in cases where the same word can mean different things in different contexts. For example, an LLM will represent the word "bill" differently depending on whether it appears in the phrase "sign the bill", "foot the bill", or "Hillary and Bill".
 
 What's remarkable is that if we have a model that is sufficiently good at predicting the next word in a sequence, we can *adapt* it to perform all sorts of text-as-data tasks, by creating a prompt that converts our desired task into a next-word prediction problem [@ornsteinHowTrainYour2022]. To show you how, we will use the `text2data` R package to create LLM prompts and submit them to OpenAI's GPT-3.[^1] Let's start by getting the R package set up.
 
-[^1]: Like many others, I have qualms about using closed-source models for scientific research [@spirlingWhyOpensourceGenerative2023], but as of summer 2023 the ease-of-use and capabilities of OpenAI's models are sufficiently beyond those of similar open-source models that it makes sense to start here. I will update both this page and the R package when I have identified a suitable set of open-source alternatives.
+[^1]: Like many others, I have qualms about using proprietary, closed-source models for scientific research [@spirlingWhyOpensourceGenerative2023]. But as of summer 2023 the ease-of-use and capabilities of OpenAI's models are sufficiently beyond those of similar open-source models that it makes sense to start here. I will update both this page and the R package when I have identified a suitable set of open-source alternatives.
 
 ## Setting Up The `text2data` Package
 
@@ -47,17 +47,47 @@ The workhorse function of the `text2data` package is `complete_prompt()`. This f
 
 [^2]: Note that the default model used by `complete_prompt()` is "davinci-002", the 175-billion parameter base GPT-3 model. You can prompt different model variants using the `model` argument.
 
-```{r}
+```{r, echo = TRUE, eval = FALSE}
 library(text2data)
 
 complete_prompt(prompt = 'My favorite food is')
 ```
 
+```{r, echo = FALSE, eval = FALSE}
+# NOTE: Throughout I'm saving the GPT-3 outputs to file so it's not re-running every time I knit the website
+library(text2data)
+
+food1 <- complete_prompt(prompt = 'My favorite food is')
+
+save(food1, file = 'data/gpt-3-outputs/food1.RData')
+```
+
+```{r, echo = FALSE, eval = TRUE}
+library(text2data)
+
+load('data/gpt-3-outputs/food1.RData')
+
+food1
+```
+
 If you prefer the model to auto-regressively generate sequences of text instead of outputting the next-word probabilities, set the `max_tokens` argument greater than 1. The function will return a character object with the most likely completion at each point in the sequence.
 
-```{r}
+```{r, echo = FALSE, eval = FALSE}
+food2 <- complete_prompt(prompt = 'My favorite food is', 
+                max_tokens = 6)
+
+save(food2, file = 'data/gpt-3-outputs/food2.RData')
+```
+
+```{r, echo = TRUE, eval = FALSE}
 complete_prompt(prompt = 'My favorite food is', 
                 max_tokens = 6)
+```
+
+```{r, echo = FALSE, eval = TRUE}
+load('data/gpt-3-outputs/food2.RData')
+
+food2
 ```
 
 If we want GPT-3 to perform a classification task, we can structure the prompt so that the best next-word prediction is the classification we want (a process called **adaptation**). Consider, for example, the following prompt.
@@ -66,11 +96,29 @@ If we want GPT-3 to perform a classification task, we can structure the prompt s
 prompt <- 'Decide whether the following statement is happy, sad, or neither.\n\nText: I feel happy.\nClassification:'
 
 cat(prompt)
+```
 
+```{r, echo = TRUE, eval = FALSE}
 complete_prompt(prompt)
 ```
 
-The result is a probability vector with the most likely completions. The correct classification -- happy -- is assigned the highest probability. (Though note that some post-processing is necessary to combine the "happy" and "Happy" responses.)
+```{r, echo = FALSE, eval = FALSE}
+prompt <- 'Decide whether the following statement is happy, sad, or neither.\n\nText: I feel happy.\nClassification:'
+
+cat(prompt)
+
+cat1 <- complete_prompt(prompt)
+
+save(cat1, file = 'data/gpt-3-outputs/cat1.RData')
+```
+
+```{r, echo = FALSE, eval = TRUE}
+load('data/gpt-3-outputs/cat1.RData')
+
+cat1
+```
+
+The result is a probability vector with the most likely completions. The correct classification -- happy -- is assigned the highest probability, though note that some post-processing is necessary to combine the "happy" and "Happy" responses.
 
 A **few-shot prompt** includes several completed examples in the text of the prompt to demonstrate the desired output. Prompts structured this way tend perform significantly better than zero-shot prompts with no examples [@brownLanguageModelsAre2020].
 
@@ -78,8 +126,22 @@ A **few-shot prompt** includes several completed examples in the text of the pro
 prompt <- 'Decide whether the following statement is happy, sad, or neither.\n\nText: What should we do today?.\nClassification: Neither\n\nText: My puppy is so cute today.\nClassification: Happy\n\nText: The news is bumming me out.\nClassification: Sad\n\nText: I feel happy.\nClassification:'
 
 cat(prompt)
+```
 
+```{r, echo = TRUE, eval = FALSE}
 complete_prompt(prompt)
+```
+
+```{r, echo = FALSE, eval = FALSE}
+cat2 <- complete_prompt(prompt)
+
+save(cat2, file = 'data/gpt-3-outputs/cat2.RData')
+```
+
+```{r, echo = FALSE, eval=TRUE}
+load('data/gpt-3-outputs/cat2.RData')
+
+cat2
 ```
 
 ## Formatting Prompts
@@ -136,12 +198,25 @@ glue(prompt)
 
 We can then pipe that prompt into `complete_prompt()` to output the desired classification:
 
-```{r}
+```{r, echo = TRUE, eval = FALSE}
 prompt |> 
   glue() |> 
   complete_prompt()
 ```
 
+```{r, echo = FALSE, eval = FALSE}
+scotus1 <- prompt |> 
+  glue() |> 
+  complete_prompt()
+
+save(scotus1, file = 'data/gpt-3-outputs/scotus1.RData')
+```
+
+```{r, echo = FALSE, eval = TRUE}
+load('data/gpt-3-outputs/scotus1.RData')
+
+scotus1
+```
 
 
 ## Cleaning Up OCR
@@ -181,11 +256,12 @@ As is common with OCR, the result is generally quite good, but not perfect. Noti
 To do so, we can prompt GPT-3 like so:
 
 ```{r}
-prompt <- glue(
-    'Create a copy of the following passage, correcting any OCR errors.\n---\nOriginal Passage:\n\n{text}\n---\nCorrected Passage:\n\n')
+prompt <- glue('Create a copy of the following passage, correcting any OCR errors.\n---\nOriginal Passage:\n\n{text}\n---\nCorrected Passage:\n\n')
 
 cat(prompt)
+```
 
+```{r, echo = TRUE, eval = FALSE}
 cleaned_text <- complete_prompt(
   prompt = prompt,
   max_tokens = nchar(text),
@@ -194,13 +270,41 @@ cleaned_text <- complete_prompt(
 cat(cleaned_text)
 ```
 
-The resulting text is a nearly perfect transcription, despite the garbled inputs. The `text2data::clean_ocr()` function performs these steps in a single function call.
+```{r, echo = FALSE, eval = FALSE}
+cleaned_text <- complete_prompt(
+  prompt = prompt,
+  max_tokens = nchar(text),
+  model = 'gpt-3.5-turbo')
 
-```{r}
+save(cleaned_text, file = 'data/gpt-3-outputs/titanic_clean.RData')
+```
+
+```{r, echo = FALSE, eval = TRUE}
+load('data/gpt-3-outputs/titanic_clean.RData')
+
+cat(cleaned_text)
+```
+
+The resulting text is a nearly perfect transcription, despite the garbled inputs! The `text2data::clean_ocr()` function performs these steps in a single function call.
+
+```{r, echo = TRUE, eval = FALSE}
 cleaned_text <- clean_ocr(text)
 
 cat(cleaned_text)
 ```
+
+```{r, echo = FALSE, eval = FALSE}
+cleaned_text <- clean_ocr(text)
+
+save(cleaned_text, file = 'data/gpt-3-outputs/titanic-text2data.RData')
+```
+
+```{r, echo = FALSE, eval = TRUE}
+load('data/gpt-3-outputs/titanic-text2data.RData')
+
+cat(cleaned_text)
+```
+
 
 ## Text To Data
 
@@ -214,7 +318,7 @@ cat(prompt)
 
 When we submit this prompt to ChatGPT, it yields a data table delimited by vertical bars, which can then be read into a dataframe.
 
-```{r}
+```{r, echo = TRUE, eval = FALSE}
 prompt <- 'Create a data table from the following passage.\n---\nThe little dog laughed to see such fun, and the dish ran away with the spoon.\n---\nData Table:\nCharacter | What They Did \n---|---\n'
 
 response <- complete_prompt(prompt, 
@@ -222,7 +326,18 @@ response <- complete_prompt(prompt,
                             model = 'gpt-3.5-turbo')
 
 response
+```
 
+```{r, echo = FALSE, eval = FALSE}
+save(response, file = 'data/gpt-3-outputs/parse1.RData')
+```
+
+```{r, echo = FALSE, eval = TRUE}
+load('data/gpt-3-outputs/parse1.RData')
+response
+```
+
+```{r}
 df <- read_delim(response,
                  delim = '|',
                  col_names = FALSE)
@@ -232,22 +347,58 @@ df
 
 Formatting this sort of prompt by hand can be tedious and error-prone, so the `parse_text()` function puts all those steps together in a more convenient interface.
 
-```{r}
+```{r, echo = TRUE, eval = FALSE}
 parse_text(instructions = 'Create a data table from the following passage.',
            text = 'The little dog laughed to see such fun, and the dish ran away with the spoon.',
            col_names = c('Character', 'What They Did'))
 ```
 
+```{r, echo = FALSE, eval = FALSE}
+df <- parse_text(instructions = 'Create a data table from the following passage.',
+           text = 'The little dog laughed to see such fun, and the dish ran away with the spoon.',
+           col_names = c('Character', 'What They Did'))
+
+save(df, file = 'data/gpt-3-outputs/parse2.RData')
+```
+
+```{r, echo = FALSE, eval = TRUE}
+load('data/gpt-3-outputs/parse2.RData')
+
+df
+```
+
 As with classification, more detailed instructions typically yield better completions.
 
-```{r}
-instructions <- 'Create a data table based on the following passage. The table should include information on (1) the names of the characters, (2) their hair color, and (3) their shoe sizes. Use NA for missing information.'
+```{r, echo = TRUE, eval = FALSE}
+instructions <- 'Create a data table based on the following passage. The table should include 
+information on (1) the names of the characters, (2) their hair color, and (3) their shoe sizes. 
+Use NA for missing information.'
 
-text <- "Jack and Jill went up the hill to fetch a pail of water. Jack fell down and broke his crown, revealing his stunning golden locks. Investigators on the scene were only able to recover Jack's shoes (size 10) and Jill's shoes (size 8)."
+text <- "Jack and Jill went up the hill to fetch a pail of water. Jack fell down and broke his 
+crown, revealing his stunning golden locks. Investigators on the scene were only able to recover 
+Jack's shoes (size 10) and Jill's shoes (size 8)."
 
 parse_text(text = text,
            instructions = instructions,
            col_names = c('Name of Character', 'Hair Color', 'Shoe Size'))
+```
+
+```{r, echo = FALSE, eval = FALSE}
+instructions <- 'Create a data table based on the following passage. The table should include information on (1) the names of the characters, (2) their hair color, and (3) their shoe sizes. Use NA for missing information.'
+
+text <- "Jack and Jill went up the hill to fetch a pail of water. Jack fell down and broke his crown, revealing his stunning golden locks. Investigators on the scene were only able to recover Jack's shoes (size 10) and Jill's shoes (size 8)."
+
+df <- parse_text(text = text,
+           instructions = instructions,
+           col_names = c('Name of Character', 'Hair Color', 'Shoe Size'))
+
+save(df, file = 'data/gpt-3-outputs/parse3.RData')
+```
+
+```{r, echo = FALSE, eval = TRUE}
+load('data/gpt-3-outputs/parse3.RData')
+
+df
 ```
 
 ## Practice Problems

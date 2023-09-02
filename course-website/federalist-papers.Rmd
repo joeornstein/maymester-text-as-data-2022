@@ -15,7 +15,7 @@ A great entry point for modeling text as data is the now classic problem of gues
 
 We'll start by [scraping](webscraping.html) the Federalist Paper corpus from Project Gutenberg.
 
-```{r}
+```{r, echo = TRUE, eval = FALSE}
 library(tidyverse)
 library(tidytext)
 library(rvest)
@@ -41,6 +41,15 @@ d <- d |>
            str_extract('HAMILTON AND MADISON|HAMILTON OR MADISON|HAMILTON|MADISON|JAY') |>
            str_to_title(),
          title = str_extract(text, 'No. [A-Z].*'))
+```
+
+```{r, echo = FALSE, eval = FALSE}
+# NOTE: saving the corpus to file to avoid timeout issues when reknitting the website
+save(d, file = 'data/federalist-corpus.RData')
+```
+
+```{r, echo = FALSE, eval = TRUE}
+load('data/federalist-corpus.RData')
 ```
 
 ## Multinomial Model
@@ -168,7 +177,7 @@ madison_likelihood / hamilton_likelihood
 madison_likelihood / jay_likelihood
 ```
 
-Since this paper is roughly 28 times more likely to have been generated from Madison's bag of words over Hamilton's (and roughly 100 times more likely than Jay's), we can conclude with some degree of confidence that he was the author.
+Since this paper is roughly 24 times more likely to have been generated from Madison's bag of words over Hamilton's (and roughly 86 times more likely than Jay's), we can conclude with some degree of confidence that he was the author.
 
 ## Vector Space Model
 

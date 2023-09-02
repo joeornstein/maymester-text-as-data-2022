@@ -9,7 +9,7 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
-In the [webscraping](webscraping.html) and [Twitter API](twitter-api.html) tutorials, we worked with texts that are already stored in digital form, so that getting them into `R` is just a matter of removing all the HTML code. But other texts (*lots* of texts) are not so digitally accessible. Maybe you're interested in historical archives living in a dark basement. Or old press releases living in a PDF. In either case, we need a method that can recognize text in *images*, and convert it into plaintext. This is a job for Optical Character Recognition (OCR).
+In the [webscraping](webscraping.html) and [Twitter API](twitter-api.html) tutorials, we worked with texts that are already stored in digital form, so that getting them into `R` is just a matter of removing all the HTML code. But other texts (*lots* of texts) are not so digitally accessible. Maybe you're interested in historical archives living in a dark basement. Or old press releases living in a PDF. In either case, we need a method that can recognize text in *images*, and convert it into plain text. This is a job for Optical Character Recognition (OCR).
 
 ## Optical Character Recognition
 
@@ -17,9 +17,7 @@ OCR is a notoriously difficult task for computers, which is why the "are you a h
 
 [![](img/suspicion.png)](https://xkcd.com/632/)
 
-But if the text is in straight lines on a white background, off-the-shelf OCR packages do a pretty good job. The workhorse OCR engine is called [Tesseract](https://en.wikipedia.org/wiki/Tesseract_(software)), and it's available in `R` through a package called `tesseract`.[^1]
-
-[^1]: As of May 2022, `tesseract` doesn't play nicely with version 4.2.0 of `R`, so you'll want one of the 4.1 versions.
+But if the text is in straight lines on a white background, off-the-shelf OCR packages do a pretty good job. The workhorse OCR engine is called [Tesseract](https://en.wikipedia.org/wiki/Tesseract_(software)), and it's available in `R` through a package called `tesseract`.
 
 Let's see if it can recognize the text in that xkcd comic above, using the `ocr()` function.
 
