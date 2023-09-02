@@ -222,11 +222,23 @@ scotus1
 
 ## Classifiation Performance
 
-As we saw in the [sentiment analysis](sentiment-analysis.html) tutorial, conventional methods for classifying sentiment perform pretty poorly on text from social media. Does this approach perform any better? Too find out, let's run the prompt for each of the tweets in the `scotus_tweets` dataframe related to the Masterpiece Cakeshop ruling, create a measure of sentiment, and compare it against the human coders.
+As we saw in the [sentiment analysis](sentiment-analysis.html) tutorial, conventional methods for classifying sentiment perform pretty poorly on text from social media. Does this approach perform any better? To find out, let's complete the prompt for each of the tweets in the `scotus_tweets` dataframe related to the Masterpiece Cakeshop ruling, create a measure of sentiment, and compare it against the human coders.
 
 First, create our prompt template with `format_prompt()`, this time with a bit more detail in the instructions. For few-shot examples, we'll use the 'masterpiece' tweets in `scotus_tweets_examples`. These are six tweets that were unanimously coded by three human annotators as Positive, Negative, or Neutral (two per category).
 
-```{r}
+```{r, echo = TRUE, eval = FALSE}
+prompt <- format_prompt(text = '{TWEET}',
+              instructions = 'Read these tweets posted the day after the US Supreme Court ruled in 
+              favor of a baker who refused to bake a wedding cake for a same-sex couple. 
+              For each tweet, decide whether its sentiment is Positive, Neutral, or Negative.',
+              examples = scotus_tweets_examples |> 
+                filter(case == 'masterpiece'),
+              template = 'Tweet: {text}\nSentiment: {label}')
+
+cat(prompt)
+```
+
+```{r, echo = FALSE, eval = TRUE}
 prompt <- format_prompt(text = '{TWEET}',
               instructions = 'Read these tweets posted the day after the US Supreme Court ruled in favor of a baker who refused to bake a wedding cake for a same-sex couple. For each tweet, decide whether its sentiment is Positive, Neutral, or Negative.',
               examples = scotus_tweets_examples |> 
@@ -316,6 +328,20 @@ save(scotus_tweets, file = 'data/gpt-3-outputs/scotus_classified.RData')
 ```{r, echo = FALSE, eval = TRUE}
 load('data/gpt-3-outputs/scotus_classified.RData')
 ```
+
+Plotting those sentiment scores against the average of the hand-coded scores, we can see that this measure is much better than the one from the [dictionary method](sentiment-analysis.html) we tried before. The correlation between the two scores is `r cor((scotus_tweets$expert1 + scotus_tweets$expert2 + scotus_tweets$expert3) / 3, scotus_tweets$gpt3_sentiment, use = 'pairwise.complete.obs') |> round(2)`.
+
+```{r}
+ggplot(data = scotus_tweets,
+       mapping = aes(x = (expert1 + expert2 + expert3) / 3,
+                     y = gpt3_sentiment)) +
+  geom_jitter(width = 0.1) +
+  labs(x = 'Hand-Coded Sentiment Score',
+       y = 'GPT-3 Sentiment Score') +
+  theme_minimal()
+```
+
+All in all, few-shot prompting an LLM is a powerful method for classifying documents without the need for extensive fine-tuning or large sets of training data, as with [supervised learning](supervised-learning.html) methods.
 
 ## Cleaning Up OCR
 
