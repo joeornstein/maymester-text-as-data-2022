@@ -42,6 +42,7 @@ vignettes/*.pdf
 raw/
 twitter-keys/
 word-embeddings_cache/
+glove.6B/
 
 # dross folder
 _dross/
