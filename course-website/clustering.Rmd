@@ -15,7 +15,7 @@ Unsupervised learning, by comparison, is less about prediction and more about *d
 
 ## K-means Clustering
 
-Chapter 12 of @grimmerTextDataNew2021 introduces the dataset of Congressional press releases that \@grimmerRepresentationalStyleCongress2013 explores in his study of representational style. Using a k-means clustering model, he developed a set of categories to describe these ways that members of Congress communicate with their constituents, discovering new categories that were previously understudied by political scientists. The full dataset is available [here](https://dataverse.harvard.edu/dataset.xhtml?persistentId=hdl:1902.1/14596), and I've included the press releases from Senator Lautenberg on the course repository. Let's load and tidy the data, representing each press release as a bag of word stems.
+Chapter 12 of @grimmerTextDataNew2021 introduces the dataset of Congressional press releases that @grimmerRepresentationalStyleCongress2013 explores in his study of representational style. Using a k-means clustering model, he developed a set of categories to describe these ways that members of Congress communicate with their constituents, discovering new categories that were previously understudied by political scientists. The full dataset is available [here](https://dataverse.harvard.edu/dataset.xhtml?persistentId=hdl:1902.1/14596), and I've included the press releases from Senator Lautenberg on the course repository. Let's load and tidy the data, representing each press release as a bag of word stems.
 
 ```{r}
 library(tidyverse)

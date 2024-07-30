@@ -9,6 +9,8 @@ bibliography: references.bib
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
 
+**Note (7/30/2024):** I have developed a new `R` package ([promptr](https://github.com/joeornstein/promptr)) with improved functionality for many of the tasks I perform with the `text2data` on this page. All the code here should still work, but I encourage you to check out the new package!
+
 Large language models (LLMs) have transformed the way computer scientists approach natural language processing over the past five years. These models, trained to predict the next word in a sequence, make use of a massive quantity of text data from the Internet and digitized books. In this tutorial, I will hand-wave over exactly *how* LLMs perform this task, focusing instead on how to adapt such models for use in social science applications. If you are interested in what's going on under the hood, I highly recommend the following two blog posts for not-too-technical introductions:
 
 -   [The GPT-3 Architecture, on a Napkin](https://dugas.ch/artificial_curiosity/GPT_architecture.html)
