@@ -12,7 +12,7 @@ navbar:
         - text: "Webscraping"
           href: webscraping.html
         - text: "APIs"
-          href: apis.html
+          href: APIs.html
         - text: "Optical Character Recognition"
           href: OCR.html
     - text: "Tidy the Text"
