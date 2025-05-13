@@ -76,4 +76,4 @@ str_trim('        Here    is    a    string           ')
 # three functions for working with character cases
 str_to_upper('hello there')
 str_to_lower('HELLO THERE')
-str_to_title('HELLO THERE')
+str_to_title('HELLO THERE!')
