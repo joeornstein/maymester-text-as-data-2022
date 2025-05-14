@@ -12,16 +12,14 @@ full_url <- paste0(base_url, document_number, '.json')
 # Use the GET() function to get the JSON file from that URL
 response <- GET(full_url)
 
-# convert the raw content into a character
-content <- response$content |>
-  rawToChar() |>
-  fromJSON()
+# get the content from that JSON with the content() function
+content <- content(response)
 
 # Now the raw text URL is an entry in the content vector
 content$raw_text_url
 
-# Step 2: use read_lines() to read in the full text
-text <- read_lines(content$raw_text_url)
+# Step 2: use read_file() to read in the full text
+text <- read_file(content$raw_text_url)
 
 cat(text)
 
@@ -36,14 +34,11 @@ get_document <- function(doc_number){
   # Use the GET() function to get the JSON file from that URL
   response <- GET(full_url)
 
-  # convert the raw content into a character
-  content <- response$content |>
-    rawToChar() |>
-    # then into an R list object
-    fromJSON()
+  # get the content from that JSON with the content() function
+  content <- content(response)
 
-  # Step 2: use read_lines() to read in the full text
-  read_lines(content$raw_text_url)
+  # Step 2: use read_file() to read in the full text
+  read_file(content$raw_text_url)
 }
 
 get_document('2025-08464')
@@ -63,8 +58,12 @@ content <- response$content |>
   rawToChar() |>
   fromJSON()
 
-# convert dataframe
+# convert to dataframe
 df <- content$results
 
-# get the raw text from the raw_text_url field
-df$text <- sapply(df$raw_text_url, read_file)
+for(i in 1:nrow(df)){
+  print(i)
+  response <- GET(df$raw_text_url[i])
+  stop_for_status(response)
+  df$text[i] <- content(response, as = "text", encoding = "UTF-8")
+}
