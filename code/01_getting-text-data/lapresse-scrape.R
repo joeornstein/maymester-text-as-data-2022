@@ -67,4 +67,3 @@ df <- readxl::read_xlsx('data/la-presse/urls.xlsx')
 df$text <- sapply(df$URL, get_la_presse)
 
 df$text[2]
-
