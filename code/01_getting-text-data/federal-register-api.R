@@ -51,7 +51,7 @@ get_document('2025-08416')
 ## Get All Proposed Rules (max 1,000) from 2025 -------------------------
 
 # note: we got this URL from the Federal Register API documentation, after specifying which types of documents we wanted
-response <- GET('https://www.federalregister.gov/api/v1/documents.json?fields[]=dates&fields[]=document_number&fields[]=raw_text_url&fields[]=title&per_page=1000&conditions[publication_date][year]=2025&conditions[type][]=PRORULE')
+response <- GET('https://www.federalregister.gov/api/v1/documents.json?fields[]=publication_date&fields[]=document_number&fields[]=raw_text_url&fields[]=title&per_page=1000&conditions[publication_date][year]=2025&conditions[type][]=PRORULE')
 
 # convert the response into an R list
 content <- response$content |>
@@ -60,10 +60,15 @@ content <- response$content |>
 
 # convert to dataframe
 df <- content$results
+df$text <- NA # initialize an empty column of text
 
 for(i in 1:nrow(df)){
   print(i)
   response <- GET(df$raw_text_url[i])
   stop_for_status(response)
   df$text[i] <- content(response, as = "text", encoding = "UTF-8")
+  # build in a little sleep time
+  Sys.sleep(1)
 }
+
+save(df, file = 'data/federal-register/proposed-rules-2025.RData')
