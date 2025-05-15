@@ -32,5 +32,5 @@ month <- month(df$publication_date[1])
 content <- xml2::read_xml(paste0('raw/FR-2025/0', month, '/FR-',
                                  df$publication_date[1], '.xml'))
 
-xml2::xml_text(content)
+text <- xml2::xml_text(content)
 

@@ -9,7 +9,7 @@ library(httr)
 api_key <- read_file('data/nytimes-api-key.txt')
 
 # get articles from the example URL
-url <- paste0('https://api.nytimes.com/svc/archive/v1/2024/1.json?api-key=',
+url <- paste0('https://api.nytimes.com/svc/archive/v1/2025/4.json?api-key=',
               api_key)
 response <- GET(url)
 
