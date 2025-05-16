@@ -77,7 +77,7 @@ df$dates <- as.Date(paste0(df$dates, '/1'),
 
 ggplot(data = df,
        mapping = aes(x = dates,
-                     y = inflation_pcts)) +
+                     y = inflation_pcts*100)) +
   geom_point() +
   geom_line() +
   labs(x = 'Month',

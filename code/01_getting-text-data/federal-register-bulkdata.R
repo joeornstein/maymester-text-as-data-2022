@@ -82,3 +82,4 @@ for(i in 1:nrow(df)){
   df$text[i] <- xml_text(filtered_rule)
 }
 
+# test comment
