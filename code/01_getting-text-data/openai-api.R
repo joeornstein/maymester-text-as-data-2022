@@ -26,7 +26,7 @@ req <- request(base_url) |>
   req_headers('Authorization' = paste("Bearer", openai_api_key)) |>
   req_headers("Content-Type" = "application/json") |>
   # add the "body" of the request
-  req_body_json(list(model = 'gpt-4o',
+  req_body_json(list(model = 'gpt-4.1',
                      input = text))
 
 # then you can perform the request and receive a response from the API,
@@ -36,6 +36,7 @@ resp <- req_perform(req)
 contents <- resp |>
   resp_body_string() |>
   jsonlite::fromJSON()
+
 contents$status
 contents$error
 contents$output
@@ -75,8 +76,8 @@ req <- request(base_url) |>
                            ),
                            list(
                              type = "input_image",
-                             #image_url = image_data_url
-                             image_url = 'https://joeornstein.github.io/text-as-data/img/titanic.png'
+                             image_url = image_data_url
+                             #image_url = 'https://joeornstein.github.io/text-as-data/img/titanic.png'
                            )
                          )
                        )
