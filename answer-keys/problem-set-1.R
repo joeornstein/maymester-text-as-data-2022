@@ -72,9 +72,11 @@ for(i in 1:length(dates)){
 library(lubridate)
 
 df <- data.frame(dates, inflation_pcts)
-df$dates <- as.Date(df$dates, format = '%Y/%m')
+df$dates <- as.Date(paste0(df$dates, '/1'),
+                    format = '%Y/%m/%d')
 
-ggplot(mapping = aes(x = dates,
+ggplot(data = df,
+       mapping = aes(x = dates,
                      y = inflation_pcts)) +
   geom_point() +
   geom_line() +
