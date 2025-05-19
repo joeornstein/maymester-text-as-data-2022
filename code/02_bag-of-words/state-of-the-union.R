@@ -64,6 +64,16 @@ sotu_words |>
   count(word_stem) |>
   wordcloud2()
 
+# only the words that appear at least 10 times:
+sotu_words |>
+  group_by(word_stem) |>
+  filter(n() > 9) |>
+  ungroup() |>
+  filter(word_stem != 'manufactur') |>
+  count(word_stem) |>
+  wordcloud2()
+
+
 sotu_words |>
   filter(word_stem != 'manufactur') |>
   count(word_stem) |>
