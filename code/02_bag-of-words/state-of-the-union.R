@@ -40,7 +40,9 @@ sotu_words <- sotu_sentences |>
   # remove stopwords
   anti_join(get_stopwords()) |>
   # convert to word stems
-  mutate(word_stem = wordStem(word))
+  mutate(word_stem = wordStem(word)) |>
+  # remove numeric word stems
+  filter(str_detect(word_stem, '[0-9]', negate = TRUE))
 
 
 # look at the frequency distribution of these words
