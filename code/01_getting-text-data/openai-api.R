@@ -23,7 +23,7 @@ base_url <- 'https://api.openai.com/v1/responses'
 # create a "request" object
 req <- request(base_url) |>
   # add "headers" to the base_url
-  req_headers('Authorization' = paste("Bearer", openai_api_key)) |>
+  req_auth_bearer_token(token = openai_api_key)  |>
   req_headers("Content-Type" = "application/json") |>
   # add the "body" of the request
   req_body_json(list(model = 'gpt-4.1',
