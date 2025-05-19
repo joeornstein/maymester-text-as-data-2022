@@ -234,7 +234,7 @@ jay_vector <- bags_of_words |>
 
 # now get the vector for Federalist No. 18
 fed18_vector <- federalist_interesting_words |>
-  filter(name == 'Federalist No. 18') |>
+  filter(title == 'No. XVIII.') |>
   count(word, .drop = FALSE) |>
   pull(n) |>
   # add names to make the vector more readable
