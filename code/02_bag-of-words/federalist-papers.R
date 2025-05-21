@@ -47,7 +47,7 @@ tidy_federalist <- d |>
 
 ## Create bags of words with a 3-word vocabaulary -------
 
-vocabulary <- c('upon', 'therefore', 'although')
+vocabulary <- c('upon', 'therefore', 'within')
 
 # filter our dataset to just include those vocabulary
 # words
@@ -93,3 +93,132 @@ fed4_bag <- table(df$word[df$title == 'No. IV.'])
 dmultinom(fed2_bag, prob = hamilton_bag)
 dmultinom(fed2_bag, prob = jay_bag)
 dmultinom(fed2_bag, prob = madison_bag)
+
+# put it all into a function
+predict_author <- function(title, vocabulary){
+
+  # filter our dataset to just include those vocabulary
+  # words
+  df <- tidy_federalist |>
+    filter(word %in% vocabulary) |>
+    mutate(word = factor(word))
+
+  # create three bags of words, one per author
+  # (not including the paper we're trying to predict!)
+  hamilton_bag <- table(df$word[df$author == 'Hamilton' &
+                                  df$title != title])
+  madison_bag <- table(df$word[df$author == 'Madison' &
+                                 df$title != title])
+  jay_bag <- table(df$word[df$author == 'Jay' &
+                             df$title != title])
+
+  # create bag of words for document whose authorship
+  # we're trying to predict
+  doc_bag <- table(df$word[df$title == title])
+
+  # Laplace Smoothed Likelihoods
+  hamilton_likelihood <- dmultinom(doc_bag,
+                                   prob = hamilton_bag + 0.1)
+
+  madison_likelihood <- dmultinom(doc_bag,
+                                   prob = madison_bag + 0.1)
+
+  jay_likelihood <- dmultinom(doc_bag,
+                              prob = jay_bag + 0.1)
+
+  if(hamilton_likelihood > jay_likelihood &
+     hamilton_likelihood > madison_likelihood){
+    return('Hamilton!')
+    #print(paste0(round(hamilton_likelihood / madison_likelihood,2),
+    #             ' times more likely than Madison.'))
+    #print(paste0(round(hamilton_likelihood / jay_likelihood,2),
+    #             ' times more likely than Jay.'))
+  }
+
+  if(madison_likelihood > hamilton_likelihood &
+     madison_likelihood > jay_likelihood){
+    return('Madison!')
+    #print(paste0(round(madison_likelihood / hamilton_likelihood,2),
+    #             ' times more likely than Hamilton.'))
+    #print(paste0(round(madison_likelihood / jay_likelihood,2),
+    #             ' times more likely than Jay.'))
+  }
+
+  if(jay_likelihood > hamilton_likelihood &
+     jay_likelihood > madison_likelihood){
+    return('Jay!')
+    #print(paste0(round(jay_likelihood / hamilton_likelihood,2),
+    #             ' times more likely than Hamilton.'))
+    #print(paste0(round(jay_likelihood / madison_likelihood,2),
+    #             ' times more likely than Madison.'))
+  }
+
+}
+
+# vocabulary <- c('which', 'people',
+#                 'upon', 'our', 'my', 'should',
+#                 'must', 'now', 'ought', 'shall',
+#                 'unequivocal', 'obeyed', 'happy',
+#                 'endeavor', 'attachment', 'indefatigable')
+
+vocabulary <- c(get_stopwords()$word, 'upon')
+
+
+# Jay Papers
+predict_author('No. II.', vocabulary)
+predict_author('No. III.', vocabulary)
+predict_author('No. IV.', vocabulary)
+
+# Hamilton Papers
+predict_author('No. XXI.', vocabulary)
+predict_author('No. XXII.', vocabulary)
+predict_author('No. XXIII.', vocabulary)
+
+# Madison Papers
+predict_author('No. XXXVII.', vocabulary)
+predict_author('No. XXXVIII.', vocabulary)
+predict_author('No. XXXIX.', vocabulary)
+
+# Generate predictions for *all* documents in the corpus
+d$prediction <- sapply(d$title,
+                       predict_author,
+                       vocabulary = vocabulary)
+table(d$author, d$prediction)
+
+
+## Cosine Similarity -------------------------
+
+vec1 <- c(1, 1)
+vec2 <- c(2, 2)
+# cosine similarity should be 1! they're the same angle
+
+# dot product of the two vectors divided by their length
+cosine_similarity <- function(vec1, vec2){
+  sum(vec1 * vec2) /
+  sqrt(sum(vec1^2)) / sqrt(sum(vec2^2))
+}
+
+cosine_similarity(vec1, vec2)
+
+# these should have cosine similarity 0
+vec1 <- c(0, 1)
+vec2 <- c(1, 0)
+cosine_similarity(vec1, vec2)
+
+vec1 <- c(2, 1)
+vec2 <- c(1, 2)
+cosine_similarity(vec1, vec2)
+
+
+
+# compute the cosine similarity for
+# documents we know were written by Jay
+
+cosine_similarity(hamilton_bag, fed2_bag)
+cosine_similarity(madison_bag, fed2_bag)
+cosine_similarity(jay_bag, fed2_bag)
+
+cosine_similarity(hamilton_bag, fed3_bag)
+cosine_similarity(madison_bag, fed3_bag)
+cosine_similarity(jay_bag, fed3_bag)
+
