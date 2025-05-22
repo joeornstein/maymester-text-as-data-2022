@@ -32,7 +32,7 @@ dtm <- tidy_speeches |>
   filter(word_stem != '') |>
   filter(R + D > 50) |>
   mutate(ratio = (D+0.1)/(R+0.1)) |>
-  filter(ratio < 0.3333333333 | ratio > 3)
+  filter(ratio < 0.5 | ratio > 2)
 
 vocabulary <- dtm$word_stem
 
